@@ -2,7 +2,7 @@ CC= /usr/bin/gcc
 STRIP= /usr/bin/strip
 MAKE= /usr/bin/make
 
-EXTRA_CFLAGS= -DDEBUG
+CFLAGS= -Os -DDEBUG
 
 LUA_DIR= lib/lua-5.1.2
 LUA_A= $(LUA_DIR)/src/liblua.a
@@ -13,9 +13,7 @@ LUCIE_C= src/lucie.c
 LUCIE_H= src/lucie.h
 LUCIE= src/lucie
 
-EXT_CORE_C= src/ext/core.c
-EXT_CORE_H= src/ext/core.h
-EXT_CORE= src/ext/core.so
+EXTENSIONS= src/ext/core.so
 
 .PHONY: all clean
 
@@ -23,12 +21,14 @@ all: $(LUCIE) $(EXT_CORE)
 
 clean:
 	cd "$(LUA_DIR)" && $(MAKE) clean
-	rm -f $(LUCIE) $(EXT_CORE)
+	rm -f $(LUCIE) $(EXTENSIONS)
 	
 $(LUA_A):
-	cd "$(LUA_DIR)/src" && $(MAKE) a MYCFLAGS="-DLUA_USE_LINUX -Os" MYLIBS="-Wl,-E -ldl"
+	cd "$(LUA_DIR)/src" && $(MAKE) a MYCFLAGS="-DLUA_USE_LINUX $(CFLAGS)" MYLIBS="-Wl,-E -ldl"
 
-$(LUCIE): $(LUCIE_C) $(LUCIE_H) $(LUA_A)
-	   $(CC) -Os -Wall -DLUA_USE_LINUX -Wl,-E -I"$(LUA_INCLUDE)" -L"$(LUA_LIB)" -o $(LUCIE) $(LUCIE_C) -lm -ldl -llua $(EXTRA_CFLAGS)
-	   $(STRIP) $(LUCIE)
+$(LUCIE): $(LUCIE_C) $(LUCIE_H) $(LUA_A) $(EXTENSIONS)
+	$(CC) -Wall -Wl,-E -I"$(LUA_INCLUDE)" -L"$(LUA_LIB)" -o $(LUCIE) $(LUCIE_C) -lm -ldl -llua $(CFLAGS)
+	$(STRIP) $(LUCIE)
 
+$(EXTENSIONS): $(EXTENSIONS:.so=.c) $(LUCIE_H) 
+	$(CC) -Wall -shared -Wl,-soname,$(@).1 -fPIC -I"$(LUA_INCLUDE)" -L"$(LUA_LIB)" -o $(@) $(@:.so=.c) $(CFLAGS)
