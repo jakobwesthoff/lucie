@@ -15,7 +15,7 @@
 /* Debug functions are only declared if the DEBUG flag is set */
 #ifdef DEBUG
     #define DEBUGLOG(fmt, ...) \
-        fprintf( stderr, fmt, __VA_ARGS__ )
+        fprintf( stderr, "DEBUG: " fmt "\n", ##__VA_ARGS__ )
     
 #else
     #define DEBUGLOG(...)
