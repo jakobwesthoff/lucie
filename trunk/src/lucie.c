@@ -4,7 +4,7 @@
 #include <lauxlib.h>
 #include <lualib.h>
 
-#include "errorhandling.h"
+#include "lucie.h"
 
 int main( int argc, char** argv )
 {
