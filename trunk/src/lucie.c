@@ -7,9 +7,27 @@
 
 #include "lucie.h"
 
+int extension_count;
+extension_t **extensions;
+
+void cleanup_registered_extensions()
+{
+    int i;
+
+    DEBUGLOG( "Freeing memory of %i extensions.", extension_count );
+    for( i = 0; i < extension_count; i++ )
+    {
+        DEBUGLOG( "Freeing extension %i.", i );
+        free( extensions[i] );
+    }
+    DEBUGLOG( "Freeing extension array." );
+    free( extensions );
+    DEBUGLOG( "All extension memory freed." );
+}
+
 int main( int argc, char** argv )
 {    
-    typedef void ( *test_t )();
+    typedef void ( *test_t )( lua_State *L );
     test_t test;
     lua_State *L;
     void* dlh;
@@ -27,10 +45,19 @@ int main( int argc, char** argv )
     DEBUGLOG( "Extension opened handle=0x%x", (int)dlh );
 
     // Try to load the test function
-    test = ( test_t )dlsym( dlh, "test" );
+    test = ( test_t )dlsym( dlh, "register_extension" );
     
     DEBUGLOG( "Executing test function" );
-    test();
+    test(L);
+
+    DEBUGLOG( "Listing registered extensions:" );
+    {
+        int i;
+        for( i=0; i<extension_count; i++ )
+        {
+            printf( "Ext name: \"%s\", Author: \"%s\", EMail: \"%s\"\n", extensions[i]->name, extensions[i]->author, extensions[i]->email );
+        }
+    }
 
     // Load the script for execution
     DEBUGLOG( "Trying to load lua file: %s", argv[1] );
@@ -39,6 +66,9 @@ int main( int argc, char** argv )
     // Execute script
     DEBUGLOG( "Executing loaded script" );
     LUACHECK( lua_pcall( L, 0, LUA_MULTRET, 0 ) );
+
+    // Cleanup memory from registered extensions
+    cleanup_registered_extensions();
 
     // Destroy the lua environment
     DEBUGLOG( "Closing lua" );

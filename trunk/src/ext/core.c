@@ -6,26 +6,30 @@
 
 #include "../lucie.h"
 
-void test() 
+int Lfoobar( lua_State *L ) 
 {
-    lua_State *L;
+    printf( "core.foobar call\n" );
+    return 0;
+}
 
-    // Init the lua engine
-    DEBUGLOG( "Initializing lua state" );
-    L = luaL_newstate();
-    DEBUGLOG( "New state created L=0x%x", (int)L );
-    luaL_openlibs( L ); 
-    DEBUGLOG( "Lua lib opened" );
+int Lfoobar2( lua_State *L ) 
+{
+    printf( "core.foobar2 call\n" );
+    return 0;
+}
 
-    // Load the script for execution
-    DEBUGLOG( "Trying to load lua file: %s", "" );
-    LUACHECK( luaL_loadfile( L, 0 ) );
+int Lglobal_foobar( lua_State *L ) 
+{
+    printf( "global foobar call\n" );
+    return 0;
+}
 
-    // Execute script
-    DEBUGLOG( "Executing loaded script" );
-    LUACHECK( lua_pcall( L, 0, LUA_MULTRET, 0 ) );
-
-    // Destroy the lua environment
-    DEBUGLOG( "Closing lua" );
-    lua_close( L );
+void register_extension( lua_State *L ) 
+{
+    REGISTER_EXTENSION( "core", "Jakob Westhoff", "jakob@westhoffswelt.de" );
+    NAMESPACE_BEGIN( "core" );
+        REGISTER_NAMESPACE_FUNCTION( Lfoobar, foobar );
+        REGISTER_NAMESPACE_FUNCTION( Lfoobar2, foobar2 );
+    NAMESPACE_END();
+    REGISTER_GLOBAL_FUNCTION( Lglobal_foobar, foobar );
 }
