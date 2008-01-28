@@ -8,7 +8,15 @@
 
 int Lfoobar( lua_State *L ) 
 {
-    printf( "core.foobar call\n" );
+    int bool;
+    const char *ch;
+    int len = 0;
+    double number;
+    PARAM_DOUBLE( number );
+    PARAM_BINARY_STRING( ch, len );
+    PARAM_BOOLEAN( bool );
+
+    printf( "core.foobar( %s, \"%s\" (%i), %f ) call\n", ( bool == 0 )?"false":"true", ch, len, number );
     return 0;
 }
 

@@ -46,6 +46,60 @@ extern extension_t **extensions;
     lua_pushcfunction( L, func );               \
     lua_setglobal( L, #luafunc );
 
+#define PARAM_BOOLEAN(bool) \
+    {                                                                                                       \
+        if ( !lua_isboolean( L, -1 ) )                                                                      \
+        {                                                                                                   \
+            return luaL_error( L, "Tried to retrieve a boolean parameter which is not of type boolean" );   \
+        }                                                                                                   \
+        bool = lua_toboolean( L, -1 );                                                                      \
+        lua_pop( L, 1 );                                                                                    \
+    }
+
+#define PARAM_DOUBLE(double) \
+    {                                                                                                       \
+        if ( !lua_isnumber( L, -1 ) )                                                                       \
+        {                                                                                                   \
+            return luaL_error( L, "Tried to retrieve a double parameter which is not of type number" );     \
+        }                                                                                                   \
+        double = lua_tonumber( L, -1 );                                                                     \
+        lua_pop( L, 1 );                                                                                    \
+    }
+
+#define PARAM_INTEGER(integer) \
+    {                                                                                                       \
+        if ( !lua_isnumber( L, -1 ) )                                                                       \
+        {                                                                                                   \
+            return luaL_error( L, "Tried to retrieve a integer parameter which is not of type number" );    \
+        }                                                                                                   \
+        integer = lua_tointeger( L, -1 );                                                                   \
+        lua_pop( L, 1 );                                                                                    \
+    }
+
+#define PARAM_STRLEN(len) \
+    {                                                                                                       \
+        len = lua_strlen( L, -1 );                                                                          \
+    }
+
+#define PARAM_STRING(string) \
+    {                                                                                                       \
+        if ( ( string = lua_tostring( L, -1 ) ) == 0 )                                                      \
+        {                                                                                                   \
+            return luaL_error( L, "Tried to retrieve a string parameter which is not of type string" );     \
+        }                                                                                                   \
+        lua_pop( L, 1 );                                                                                    \
+    }
+
+#define PARAM_BINARY_STRING(string, len) \
+    {                                                                                                       \
+        if ( ( string = lua_tostring( L, -1 ) ) == 0 )                                                      \
+        {                                                                                                   \
+            return luaL_error( L, "Tried to retrieve a string parameter which is not of type string" );     \
+        }                                                                                                   \
+        len = lua_strlen( L, -1 );                                                                          \
+        lua_pop( L, 1 );                                                                                    \
+    }
+
 #define LUACHECK(x) \
     {                                                                                                     \
         int error = x;                                                                                    \
