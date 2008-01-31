@@ -72,7 +72,7 @@ extern extension_t **extensions;
         {                                                                                                   \
             return luaL_error( L, "Tried to retrieve a integer parameter which is not of type number" );    \
         }                                                                                                   \
-        integer = lua_tointeger( L, -1 );                                                                   \
+integer = lua_tointeger( L, -1 );                                                                   \
         lua_pop( L, 1 );                                                                                    \
     }
 
@@ -100,6 +100,48 @@ extern extension_t **extensions;
         lua_pop( L, 1 );                                                                                    \
     }
 
+#define RETURN_NIL() \
+    lua_pushnil( L, value );
+
+#define RETURN_BOOLEAN(value) \
+    lua_pushboolean( L, value );
+
+#define RETURN_DOUBLE(value) \
+    lua_pushnumber( L, value );
+
+#define RETURN_INTEGER(value) \
+    lua_pushinteger( L, value );
+
+#define RETURN_STRING(value) \
+    lua_pushlstring( L, value, strlen( value ) );
+
+#define RETURN_BINARY_STRING(value, len) \
+    lua_pushlstring( L, value, len );
+
+#define RETURN_ARRAY(type, datasrc, count)  \
+    {                                       \
+        int i=1;                            \
+        lua_newtable( L );                  \
+        for( i=0; i<count; i++ )            \
+        {                                   \
+            lua_pushinteger( L, i + 1 );    \
+            RETURN_ ## type(datasrc[i])     \
+            lua_settable( L, -3 );          \
+        }                                   \
+    }
+
+#define RETURN_BOOLEAN_ARRAY( datasrc, count ) \
+    RETURN_ARRAY( BOOLEAN, datasrc, count )
+    
+#define RETURN_DOUBLE_ARRAY( datasrc, count ) \
+    RETURN_ARRAY( DOUBLE, datasrc, count )
+    
+#define RETURN_INTEGER_ARRAY( datasrc, count ) \
+    RETURN_ARRAY( INTEGER, datasrc, count )
+    
+#define RETURN_STRING_ARRAY( datasrc, count ) \
+    RETURN_ARRAY( STRING, datasrc, count )
+    
 #define LUACHECK(x) \
     {                                                                                                     \
         int error = x;                                                                                    \

@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
@@ -22,8 +23,10 @@ int Lfoobar( lua_State *L )
 
 int Lfoobar2( lua_State *L ) 
 {
+    const char* retval[] = { "foobar1", "foobar2", "foobar3" };
     printf( "core.foobar2 call\n" );
-    return 0;
+    RETURN_ARRAY( STRING, retval, 3 );
+    return 1;
 }
 
 int Lglobal_foobar( lua_State *L ) 
