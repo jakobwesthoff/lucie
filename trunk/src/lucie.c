@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <dlfcn.h>
+#include <libgen.h>
 
 #include "lucie.h"
 #include "inireader.h"
@@ -171,7 +172,25 @@ void register_extensions( lua_State* L )
 
 int main( int argc, char** argv )
 {    
+    const char* name    = "LUCIE - Lua common internet environment";
+    const char* author  = "Jakob Westhoff <jakob@westhoffswelt.de>";
+    const char* version = "Version 0.1";
+
     lua_State *L;
+
+    // Check for commandline parameters ( We need at least the script filename
+    // to execute )
+    if ( argc < 2 ) 
+    {
+        printf( "%s %s\nCopyright %s\n", name, version, author );
+        printf( "\nUsage: %s <lucie scriptfile>\n", basename( argv[0] ) );
+        printf( "\nInformation:\n" );
+        printf( "    This interpreter should be called as a cgi executable from\n    inside the webserver.\n" );
+        printf( "\n    The configurationfile position can be specified by setting\n    the LUCIE_CONFIG_FILE environment variable.\n" );
+        printf( "\n" );
+
+        exit( EXIT_FAILURE );
+    }
 
     // Init the lua engine
     DEBUGLOG( "Initializing lua state" );
@@ -180,7 +199,9 @@ int main( int argc, char** argv )
     luaL_openlibs( L ); 
     DEBUGLOG( "Lua lib opened" );
 
+    DEBUGLOG( "Registering extensions" );
     register_extensions( L );
+    DEBUGLOG( "All extensions registered" );
 
     // Load the script for execution
     DEBUGLOG( "Trying to load lua file: %s", argv[1] );
