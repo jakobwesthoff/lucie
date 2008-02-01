@@ -3,6 +3,7 @@
 
 #include <string.h>
 #include <errno.h>
+#include <sys/stat.h>
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
@@ -21,6 +22,7 @@ extern char errorstring[4096];
 
 extern void* smalloc( size_t bytes );
 extern void* srealloc( void* old, size_t bytes );
+extern int file_exists( const char* filename );
 
 #ifndef FALSE 
     #define FALSE 0

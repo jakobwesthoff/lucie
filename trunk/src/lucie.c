@@ -34,6 +34,26 @@ void* srealloc( void* old, size_t bytes )
     return allocated;
 }
 
+int file_exists( const char* filename ) 
+{
+	struct stat stats;
+	
+	if ( stat( filename, &stats ) == -1 )
+	{
+		if ( errno == ENOENT )
+		{
+			return false;
+		}
+		else
+		{
+			// An error occured during the stats call
+	        print_error("An error occured during a file_exists check");
+			exit( EXIT_FAILURE );
+		}
+	}
+	return true;
+}
+
 void cleanup_registered_extensions()
 {
     int i;

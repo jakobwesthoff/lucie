@@ -14,12 +14,12 @@ inifile_t* inireader_open( const char* filename )
 {
     inifile_t* inifile = null;
 
-/*    if ( !file_exists( filename ) ) 
+    if ( !file_exists( filename ) ) 
     {
         THROW_ERROR( "Inifile \"%s\" does not exist.", filename );
         return NULL;
     }
-*/
+
     DEBUGLOG( "Allocating memory for inifile structure" );
     inifile = ( inifile_t* )smalloc( sizeof( inifile_t ) );
     inifile->first   = NULL;
