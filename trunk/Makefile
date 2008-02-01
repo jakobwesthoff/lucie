@@ -9,8 +9,8 @@ LUA_A= $(LUA_DIR)/src/liblua.a
 LUA_INCLUDE= $(LUA_DIR)/src
 LUA_LIB= $(LUA_DIR)/src
 
-LUCIE_C= src/lucie.c
-LUCIE_H= src/lucie.h
+LUCIE_C= src/lucie.c src/inireader.c
+LUCIE_H= src/lucie.h src/inireader.h 
 LUCIE= src/lucie
 
 EXTENSIONS= src/ext/core.so

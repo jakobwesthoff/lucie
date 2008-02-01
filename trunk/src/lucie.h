@@ -1,6 +1,12 @@
 #ifndef LUCIE_H
 #define LUCIE_H
 
+#include <string.h>
+#include <errno.h>
+#include <lua.h>
+#include <lauxlib.h>
+#include <lualib.h>
+
 typedef struct 
     {
         char* name;
@@ -11,35 +17,73 @@ typedef struct
 extern int extension_count;
 extern extension_t **extensions;
 
+extern char errorstring[4096];
+
+extern void* smalloc( size_t bytes );
+extern void* srealloc( void* old, size_t bytes );
+
+#ifndef FALSE 
+    #define FALSE 0
+#endif
+#ifndef false
+    #define false 0
+#endif
+#ifndef TRUE
+    #define TRUE 1
+#endif
+#ifndef true
+    #define true 1
+#endif
+#ifndef NULL  
+    #define NULL 0
+#endif
+#ifndef null
+    #define null 0
+#endif
+
+#define THROW_ERROR(fmt, ...) \
+    errno = 0;                                      \
+    sprintf( errorstring, fmt, ##__VA_ARGS__ ); 
+
+#define print_error(desc) \
+    if ( errno != 0 )                                                                               \
+    {                                                                                               \
+        fprintf( stderr, "%s <%d>: %s\n\t%s\n", __FILE__, __LINE__, desc, strerror( errno ) );      \
+    }                                                                                               \
+    else                                                                                            \
+    {                                                                                               \
+        fprintf( stderr, "%s <%d>: %s\n\t%s\n", __FILE__, __LINE__, desc, errorstring );            \
+    }
+
 #define REGISTER_EXTENSION(nameVal, authorVal, emailVal) \
-    {                                                                                                               \
-        if ( extension_count == 0 )                                                                                 \
-        {                                                                                                           \
-            extensions = ( extension_t** ) malloc( 4 * sizeof( extension_t* ) );                                    \
-        }                                                                                                           \
-        else if ( extension_count % 4 == 0 )                                                                        \
-        {                                                                                                           \
-            extensions = ( extension_t** ) realloc( extensions, ( extension_count + 4 ) * sizeof( extension_t* ) );     \
-        }                                                                                                           \
-        extensions[extension_count] = ( extension_t* ) malloc( sizeof( extension_t ) );                             \
-        extensions[extension_count]->name = nameVal;                                                                \
-        extensions[extension_count]->author = authorVal;                                                            \
-        extensions[extension_count++]->email = emailVal;                                                            \
+    {                                                                                                                   \
+        if ( extension_count == 0 )                                                                                     \
+        {                                                                                                               \
+            extensions = ( extension_t** ) smalloc( 4 * sizeof( extension_t* ) );                                       \
+        }                                                                                                               \
+        else if ( extension_count % 4 == 0 )                                                                            \
+        {                                                                                                               \
+            extensions = ( extension_t** ) srealloc( extensions, ( extension_count + 4 ) * sizeof( extension_t* ) );    \
+        }                                                                                                               \
+        extensions[extension_count] = ( extension_t* ) smalloc( sizeof( extension_t ) );                                 \
+        extensions[extension_count]->name = nameVal;                                                                    \
+        extensions[extension_count]->author = authorVal;                                                                \
+        extensions[extension_count++]->email = emailVal;                                                                \
     }
 
 #define NAMESPACE_BEGIN(namespaceVal) \
-    {                                   \
-        char* namespace=namespaceVal;   \
-        lua_newtable( L );               
+    {                                 \
+        char* namespace=namespaceVal; \
+        lua_newtable( L ); 
 
 #define NAMESPACE_END(...) \
         lua_setglobal( L, namespace );  \
     }
 
 
-#define REGISTER_NAMESPACE_FUNCTION(func, luafunc) \
-    lua_pushstring( L, #luafunc );      \
-    lua_pushcfunction( L, func );       \
+#define REGISTER_NAMESPACE_FUNCTION(func, luafunc)  \
+    lua_pushstring( L, #luafunc );                  \
+    lua_pushcfunction( L, func );                   \
     lua_settable( L, -3 );              
 
 #define REGISTER_GLOBAL_FUNCTION(func, luafunc) \

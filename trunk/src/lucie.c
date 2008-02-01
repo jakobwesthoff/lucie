@@ -1,14 +1,38 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <dlfcn.h>
-#include <lua.h>
-#include <lauxlib.h>
-#include <lualib.h>
 
 #include "lucie.h"
+#include "inireader.h"
 
 int extension_count;
 extension_t **extensions;
+
+char errorstring[4096];
+
+void* smalloc( size_t bytes )
+{
+    void* allocated;
+    if ( ( allocated = malloc( bytes ) ) == NULL ) 
+    {
+        THROW_ERROR( "Failed to allocate %d bytes.", bytes );
+        print_error( "Allocation failed" );
+        exit( EXIT_FAILURE );
+    }
+    return allocated;
+}
+
+void* srealloc( void* old, size_t bytes )
+{
+    void* allocated;
+    if ( ( allocated = realloc( old, bytes ) ) == NULL ) 
+    {
+        THROW_ERROR( "Failed to allocate %d bytes.", bytes );
+        print_error( "Reallocation failed" );
+        exit( EXIT_FAILURE );
+    }
+    return allocated;
+}
 
 void cleanup_registered_extensions()
 {
@@ -31,6 +55,7 @@ int main( int argc, char** argv )
     test_t test;
     lua_State *L;
     void* dlh;
+    inifile_t* inifile;
 
     // Init the lua engine
     DEBUGLOG( "Initializing lua state" );
@@ -38,6 +63,11 @@ int main( int argc, char** argv )
     DEBUGLOG( "New state created L=0x%x", (int)L );
     luaL_openlibs( L ); 
     DEBUGLOG( "Lua lib opened" );
+
+    // Test parse inifile
+    DEBUGLOG( "Opening inifile" );
+    inifile = inireader_open( "./test.ini" );
+    DEBUGLOG( "Inifile opened" );
 
     // Open the core shared lib for testing
     DEBUGLOG( "Opening ext/core.so" );
