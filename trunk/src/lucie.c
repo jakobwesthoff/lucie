@@ -69,13 +69,109 @@ void cleanup_registered_extensions()
     DEBUGLOG( "All extension memory freed." );
 }
 
+void register_extensions( lua_State* L ) 
+{
+    inifile_t* inifile         = NULL;
+    inireader_iterator_t* iter = NULL;
+    inireader_entry_t* current = NULL;
+    
+    const char* lucie_config_path_env = NULL;
+    const char* config_file           = NULL;
+
+    // Harcoded configpaths to check
+    const char* hardcoded_path[] = {
+        "/etc/lucie.conf",
+        "/usr/local/etc/lucie.conf",        
+    };
+
+    // First try to read the configpath from the LUCIE_CONFIG_PATH environment
+    // variable
+    lucie_config_path_env = getenv( "LUCIE_CONFIG_PATH" );
+    if ( lucie_config_path_env != NULL ) 
+    {
+        if ( file_exists( lucie_config_path_env ) ) 
+        {
+            config_file = lucie_config_path_env;
+        }
+    }
+
+    // Check the working directory for a config file next
+    if ( config_file == NULL && file_exists( "./lucie.conf" ) ) 
+    {
+        config_file = "./lucie.conf";
+    }
+
+    // Check the hardcoded paths for the configfile
+    if ( config_file == NULL ) 
+    {
+        int i = 0;
+        for( i=0; i<2; i++ ) 
+        {
+            if ( file_exists( hardcoded_path[i] ) ) 
+            {
+                config_file = hardcoded_path[i];
+                break;
+            }
+        }
+    }
+
+    // Exit if we can not find a configuration file
+    if ( config_file == NULL ) 
+    {
+        THROW_ERROR( "The configuration file could not be found anywhere." );
+        print_error( "Configuration file read error" );
+        exit( EXIT_FAILURE );
+    }
+
+    // Open the configfile and get an iterator for the extension list
+    inifile = inireader_open( config_file );
+    iter = inireader_get_iterator( inifile, "extensions", "extension", 0, 0 );
+
+    // Iterate over all of the given extensions and try to load them.
+    for( current = inireader_iterate( iter ); current != NULL; current = inireader_iterate( iter ) ) 
+    {
+        void* so_handle = NULL;
+        typedef void ( *register_extension_t )( lua_State *L );
+        register_extension_t register_extension;
+
+        DEBUGLOG( "Trying to load extension: %s", current->data );
+        
+        if ( !file_exists( current->data ) ) 
+        {
+            THROW_ERROR( "The specified extension \"%s\" does not exist.", current->data );
+            print_error( "Extension loading failed" );
+            exit( EXIT_FAILURE );
+        }
+
+        // Try to open the extensions shared library file
+        DEBUGLOG( "Opening %s", current->data );
+        if ( ( so_handle = dlopen( current->data, RTLD_LAZY ) ) == NULL ) 
+        {
+            THROW_ERROR( "%s", dlerror() );
+            print_error( "Extension loading failed" );
+            exit( EXIT_FAILURE );
+        }
+        DEBUGLOG( "Extension opened handle=0x%x", (int)so_handle );
+
+        // Try to load the register extension function
+        DEBUGLOG( "Trying to get symbol of the register_extension function" );
+        if ( ( register_extension = ( register_extension_t )dlsym( so_handle, "register_extension" ) ) == NULL )
+        {
+            THROW_ERROR( "%s", dlerror() );
+            print_error( "Extension loading failed" );
+            exit( EXIT_FAILURE );
+        }
+        DEBUGLOG( "Symbol register_extension retrieved. register_extension=0x%x", (int)register_extension );
+
+        DEBUGLOG( "Calling register_extension" );
+        register_extension( L );
+        DEBUGLOG( "Extension registered" );
+    }
+}
+
 int main( int argc, char** argv )
 {    
-    typedef void ( *test_t )( lua_State *L );
-    test_t test;
     lua_State *L;
-    void* dlh;
-    inifile_t* inifile;
 
     // Init the lua engine
     DEBUGLOG( "Initializing lua state" );
@@ -84,51 +180,7 @@ int main( int argc, char** argv )
     luaL_openlibs( L ); 
     DEBUGLOG( "Lua lib opened" );
 
-    // Test parse inifile
-    DEBUGLOG( "Opening inifile" );
-    inifile = inireader_open( "./test.ini" );
-    DEBUGLOG( "Inifile opened" );
-    // Just output the read information for testing purpose
-    {
-        inireader_iterator_t* iter;
-        inireader_entry_t* current;
-        DEBUGLOG( "Iterate all" );
-        for( iter = inireader_get_iterator( inifile, 0, 0, 0, 0 ), current = inireader_iterate( iter ); current != NULL; current = inireader_iterate( iter ) ) 
-        {
-            printf( "Group: %s, Identifier: %s, Key: %s, Data: %s\n", current->group, current->identifier, current->key, current->data );
-        }
-        inireader_destroy_iterator( iter );
-        DEBUGLOG( "Iterate group \"array_group\"" );
-        for( iter = inireader_get_iterator( inifile, "array_group", 0, 0, 0 ), current = inireader_iterate( iter ); current != NULL; current = inireader_iterate( iter ) ) 
-        {
-            printf( "Group: %s, Identifier: %s, Key: %s, Data: %s\n", current->group, current->identifier, current->key, current->data );
-        }
-        inireader_destroy_iterator( iter );
-
-    }
-    DEBUGLOG( "Closing inifile" );
-    inireader_close( inifile );
-    DEBUGLOG( "Inifile closed" );
-
-    // Open the core shared lib for testing
-    DEBUGLOG( "Opening ext/core.so" );
-    dlh = dlopen( "./src/ext/core.so", RTLD_LAZY );
-    DEBUGLOG( "Extension opened handle=0x%x", (int)dlh );
-
-    // Try to load the test function
-    test = ( test_t )dlsym( dlh, "register_extension" );
-    
-    DEBUGLOG( "Executing test function" );
-    test(L);
-
-    DEBUGLOG( "Listing registered extensions:" );
-    {
-        int i;
-        for( i=0; i<extension_count; i++ )
-        {
-            printf( "Ext name: \"%s\", Author: \"%s\", EMail: \"%s\"\n", extensions[i]->name, extensions[i]->author, extensions[i]->email );
-        }
-    }
+    register_extensions( L );
 
     // Load the script for execution
     DEBUGLOG( "Trying to load lua file: %s", argv[1] );
