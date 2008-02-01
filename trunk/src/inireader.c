@@ -80,7 +80,7 @@ int inireader_parse( inifile_t* inifile )
     current->key     = NULL;
     current->group   = NULL;
     current->isArray = false;
-    
+
     // Seeking to the beginning of the file
     fseek( inifile->handle, 0, SEEK_SET );
 
@@ -135,14 +135,17 @@ int inireader_parse( inifile_t* inifile )
         {
             
         }
-        else if ( ( state == IGNORE_LINE ) ) 
+        else if ( ( state == IGNORE_LINE ) && ( ( c != '\r' ) && ( c != '\n' ) ) ) 
         {
             // Just ignore the character
         }
-        else if ( c == '/' && lookahead == '/' ) 
+        else if ( ( state == LINE_START ) && ( ( c == ';' ) || ( c == '#' ) ) ) 
         {
-            lookahead = fgetc( inifile->handle );
             state = IGNORE_LINE;
+        }
+        else if ( ( state == DATA ) && ( ( c != '\r' ) && ( c != '\n' ) ) ) 
+        {
+
         }
         else if ( ( c == '\r' ) && ( lookahead == '\n' ) ) 
         {
@@ -167,8 +170,11 @@ int inireader_parse( inifile_t* inifile )
         {
             ungetc( lookahead, inifile->handle );
         }
+        
+        DEBUGLOG( "Line: %d, Character: %d, Read character: '%c', State: %d", line, character, c, state );
     }
 
+    
     return true;
 }
 
