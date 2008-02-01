@@ -23,7 +23,6 @@ inifile_t* inireader_open( const char* filename )
     DEBUGLOG( "Allocating memory for inifile structure" );
     inifile = ( inifile_t* )smalloc( sizeof( inifile_t ) );
     inifile->first   = NULL;
-    inifile->current = NULL;
     
     DEBUGLOG( "Opening inifile \"%s\" for reading", filename );
     if ( ( inifile->handle = fopen( filename, "r" ) ) == NULL ) 
@@ -57,74 +56,127 @@ void inireader_free_inifile( inifile_t* inifile )
     inifile_entry_t* current;    
     for( current = inifile->first; current != NULL; current = current->next ) 
     {
-        free( current->name );
+        free( current->identifier );
         free( current->data );
         free( current->key );
+        free( current->group );
     }
     free( inifile );
 }
 
 int inireader_parse( inifile_t* inifile )
 {
-    enum { LINE_START = 1, IDENTIFIER, KEY, AROUND_EQUALSIGN, DATA, GROUP, IGNORE_LINE } state = 1;
+    enum { LINE_START = 1, IDENTIFIER, KEY, BEFORE_EQUALSIGN, AFTER_EQUALSIGN, DATA, GROUP, IGNORE_LINE } state = 1;
     int c;
-    char* group;
+    char* group = NULL;
     int len = 0;
     int line = 1;
     int character = 1;
+    inifile_entry_t* current = NULL;
     
-    // Allocate space for the first entry
-    inifile_entry_t* current = inifile->first = ( inifile_entry_t* )smalloc( sizeof( inifile_entry_t ) );
-    current->name    = NULL;
-    current->data    = NULL;
-    current->key     = NULL;
-    current->group   = NULL;
-    current->isArray = false;
-
     // Seeking to the beginning of the file
     fseek( inifile->handle, 0, SEEK_SET );
 
     // Read character by character
     for( c = fgetc( inifile->handle ); !feof( inifile->handle ); c = fgetc( inifile->handle ), character++ ) 
     {   
-        int lookahead = fgetc( inifile->handle );
-
         if ( ( state == IDENTIFIER ) && ( ( c >= 'A' && c <= 'Z' ) || ( c >= 'a' && c <= 'z' ) || ( c >= '0' && c <= '9' ) || ( c == '_' ) ) ) 
         {
-
+            // Allocate or reallocate the identifier string
+            if ( current->identifier == NULL ) 
+            {
+                DEBUGLOG( "Initial allocation for identifier" );
+                current->identifier = ( char* )smalloc( 16 * sizeof( char ) );                
+                memset( current->identifier, 0, 16 );
+                len = 0;
+            }
+            else if ( ( len + 1 ) % 16 == 0 ) 
+            {
+                DEBUGLOG( "Reallocation for identifier" );
+                current->identifier = ( char* )srealloc( current->identifier, ( len + 16 + 1 ) * sizeof( char ) );
+                memset( current->identifier + len + 1, 0, 16 );
+            }
+            DEBUGLOG( "Adding character to identifier at pos %d", len );
+            current->identifier[len++] = c;
         }
         else if ( ( state == IDENTIFIER ) && ( c == '[' ) ) 
         {
-            current->isArray = true;
             state = KEY;
         }
-        else if ( ( ( state == IDENTIFIER ) || ( state == KEY ) ) && ( c == '=' ) ) 
+        else if ( ( ( state == IDENTIFIER ) || ( state == KEY ) || ( state == BEFORE_EQUALSIGN ) ) && ( c == '=' ) ) 
         {
-            state = AROUND_EQUALSIGN;
+            // Copy the group string or set it to null. We are doing this at
+            // the equal sign, because this token is only read once in this
+            // state
+            if ( group != NULL ) 
+            {
+                DEBUGLOG( "Setting group: %s", group );
+                current->group = strdup( group );
+            }
+
+            state = AFTER_EQUALSIGN;
         }
         else if ( ( state == KEY ) && ( ( c >= 'A' && c <= 'Z' ) || ( c >= 'a' && c <= 'z' ) || ( c >= '0' && c <= '9' ) || ( c == '_' ) ) ) 
         {
-
+            if ( current->key == NULL ) 
+            {
+                DEBUGLOG( "Initial allocation for key" );
+                current->key = ( char* )smalloc( 16 * sizeof( char ) );                
+                memset( current->key, 0, 16 );
+                len = 0;
+            }
+            else if ( ( len + 1 ) % 16 == 0 ) 
+            {
+                DEBUGLOG( "Reallocation for key" );
+                current->key = ( char* )srealloc( current->key, ( len + 16 + 1 ) * sizeof( char ) );
+                memset( current->key + len + 1, 0, 16 );
+            }
+            DEBUGLOG( "Adding character to key at pos %d", len );
+            current->key[len++] = c;
         }
         else if ( ( ( state == KEY ) && ( c == ']' ) ) || ( ( state == IDENTIFIER ) && ( ( c == ' ' ) || ( c == '\t' ) ) ) ) 
         {
-            state = AROUND_EQUALSIGN;
+            state = BEFORE_EQUALSIGN;
         }
-        else if ( ( ( state == LINE_START ) || ( state == AROUND_EQUALSIGN ) ) && ( ( c == ' ' ) || c == '\t' ) ) 
+        else if ( ( ( state == LINE_START ) || ( state == BEFORE_EQUALSIGN ) || ( state == AFTER_EQUALSIGN ) ) && ( ( c == ' ' ) || c == '\t' ) ) 
         {
             // Just eat the whitespaces ;)
         }
-        else if ( ( state == AROUND_EQUALSIGN ) && ( ( c != ' ' ) && ( c != '\t' ) ) ) 
+        else if ( ( state == AFTER_EQUALSIGN ) && ( ( c != ' ' ) && ( c != '\t' ) ) ) 
         {
             ungetc( c, inifile->handle );
             state = DATA;
         }
         else if ( ( state == LINE_START ) && ( ( c >= 'A' && c <= 'Z' ) || ( c >= 'a' && c <= 'z' ) || ( c >= '0' && c <= '9' ) || ( c == '_' ) ) ) 
         {
+            // Allocate memory for the new entry
+            inifile_entry_t* next = ( inifile_entry_t* )smalloc( sizeof( inifile_entry_t ) );
+            next->identifier = NULL;
+            next->data       = NULL;
+            next->key        = NULL;
+            next->group      = NULL;
+            
+            // Maybe this is our first entry, therefore it does not have any parents
+            if ( inifile->first == NULL ) 
+            {
+                inifile->first = next;
+            }
+            // Just add a new element to the list
+            else 
+            {
+                current->next = next;
+            }
+            current = next;
+
             state = IDENTIFIER;
+            ungetc( c, inifile->handle );
         }
         else if ( ( state == LINE_START ) && ( c == '[' ) ) 
         {
+            // Free the old group string
+            free( group );
+            group = NULL;
+
             state = GROUP;
         }
         else if ( ( state == GROUP ) && ( c == ']' ) ) 
@@ -133,7 +185,21 @@ int inireader_parse( inifile_t* inifile )
         }
         else if ( ( state == GROUP ) && ( ( c >= 'A' && c <= 'Z' ) || ( c >= 'a' && c <= 'z' ) || ( c >= '0' && c <= '9' ) || ( c == '_' ) ) ) 
         {
-            
+            if ( group == NULL ) 
+            {
+                DEBUGLOG( "Initial allocation for group" );
+                group = ( char* )smalloc( 16 * sizeof( char ) );                
+                memset( group, 0, 16 );
+                len = 0;
+            }
+            else if ( ( len + 1 ) % 16 == 0 ) 
+            {
+                DEBUGLOG( "Reallocation for group" );
+                group = ( char* )srealloc( group, ( len + 16 + 1 ) * sizeof( char ) );
+                memset( group + len + 1, 0, 16 );
+            }
+            DEBUGLOG( "Adding character to group at pos %d", len );
+            group[len++] = c;
         }
         else if ( ( state == IGNORE_LINE ) && ( ( c != '\r' ) && ( c != '\n' ) ) ) 
         {
@@ -145,17 +211,30 @@ int inireader_parse( inifile_t* inifile )
         }
         else if ( ( state == DATA ) && ( ( c != '\r' ) && ( c != '\n' ) ) ) 
         {
+            if ( current->data == NULL ) 
+            {
+                DEBUGLOG( "Initial allocation for data" );
+                current->data = ( char* )smalloc( 32 * sizeof( char ) );                
+                memset( current->data, 0, 32 );
+                len = 0;
+            }
+            else if ( ( len + 1 ) % 32 == 0 ) 
+            {
+                DEBUGLOG( "Reallocation for data" );
+                current->data = ( char* )srealloc( current->data, ( len + 1 + 32 ) * sizeof( char ) );
+                memset( current->data + len + 1, 0, 32 );
+            }
+            DEBUGLOG( "Adding character to data at pos %d", len );
+            current->data[len++] = c;
+        }
+        else if ( ( c == '\n' ) || ( c == '\r' ) ) 
+        {
+            int la = fgetc( inifile->handle );
+            if ( la != '\n' ) 
+            {
+                ungetc( la, inifile->handle );
+            }
 
-        }
-        else if ( ( c == '\r' ) && ( lookahead == '\n' ) ) 
-        {
-            lookahead = fgetc( inifile->handle );
-            character = 0;
-            line++;
-            state = LINE_START;
-        }
-        else if ( ( c == '\n' ) ) 
-        {
             character = 0;
             line++;
             state = LINE_START;
@@ -166,14 +245,10 @@ int inireader_parse( inifile_t* inifile )
             return 0;
         }
 
-        if ( lookahead != EOF ) 
-        {
-            ungetc( lookahead, inifile->handle );
-        }
-        
-        DEBUGLOG( "Line: %d, Character: %d, Read character: '%c', State: %d", line, character, c, state );
+        DEBUGLOG( "Line: %d, Character: %d, Read character: '%c', State: %d, len: %d", line, character, c, state, len );
     }
 
+    
     
     return true;
 }

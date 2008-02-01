@@ -68,6 +68,17 @@ int main( int argc, char** argv )
     DEBUGLOG( "Opening inifile" );
     inifile = inireader_open( "./test.ini" );
     DEBUGLOG( "Inifile opened" );
+    // Just output the read information for testing purpose
+    {
+        inifile_entry_t* current;
+        for( current = inifile->first; current != NULL; current = current->next ) 
+        {
+            DEBUGLOG( "Entry: [%s] %s[%s]=%s", current->group, current->identifier, current->key, current->data );
+        }
+    }
+    DEBUGLOG( "Closing inifile" );
+    inireader_close( inifile );
+    DEBUGLOG( "Inifile closed" );
 
     // Open the core shared lib for testing
     DEBUGLOG( "Opening ext/core.so" );
