@@ -290,8 +290,6 @@ int inireader_parse( inifile_t* inifile )
 
         DEBUGLOG( "Line: %d, Character: %d, Read character: '%c', State: %d, len: %d", line, character, c, state, len );
     }
-
-    
     
     return true;
 }
