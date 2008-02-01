@@ -53,7 +53,7 @@ int inireader_close( inifile_t* inifile )
 
 void inireader_free_inifile( inifile_t* inifile ) 
 {
-    inifile_entry_t* current;    
+    inireader_entry_t* current;    
     for( current = inifile->first; current != NULL; current = current->next ) 
     {
         free( current->identifier );
@@ -72,7 +72,7 @@ int inireader_parse( inifile_t* inifile )
     int len = 0;
     int line = 1;
     int character = 1;
-    inifile_entry_t* current = NULL;
+    inireader_entry_t* current = NULL;
     
     // Seeking to the beginning of the file
     fseek( inifile->handle, 0, SEEK_SET );
@@ -150,7 +150,7 @@ int inireader_parse( inifile_t* inifile )
         else if ( ( state == LINE_START ) && ( ( c >= 'A' && c <= 'Z' ) || ( c >= 'a' && c <= 'z' ) || ( c >= '0' && c <= '9' ) || ( c == '_' ) ) ) 
         {
             // Allocate memory for the new entry
-            inifile_entry_t* next = ( inifile_entry_t* )smalloc( sizeof( inifile_entry_t ) );
+            inireader_entry_t* next = ( inireader_entry_t* )smalloc( sizeof( inireader_entry_t ) );
             next->identifier = NULL;
             next->data       = NULL;
             next->key        = NULL;

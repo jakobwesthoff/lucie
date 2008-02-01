@@ -70,7 +70,7 @@ int main( int argc, char** argv )
     DEBUGLOG( "Inifile opened" );
     // Just output the read information for testing purpose
     {
-        inifile_entry_t* current;
+        inireader_entry_t* current;
         for( current = inifile->first; current != NULL; current = current->next ) 
         {
             DEBUGLOG( "Entry: [%s] %s[%s]=%s", current->group, current->identifier, current->key, current->data );
