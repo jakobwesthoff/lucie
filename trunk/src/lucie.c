@@ -70,11 +70,21 @@ int main( int argc, char** argv )
     DEBUGLOG( "Inifile opened" );
     // Just output the read information for testing purpose
     {
+        inireader_iterator_t* iter;
         inireader_entry_t* current;
-        for( current = inifile->first; current != NULL; current = current->next ) 
+        DEBUGLOG( "Iterate all" );
+        for( iter = inireader_get_iterator( inifile, 0, 0, 0, 0 ), current = inireader_iterate( iter ); current != NULL; current = inireader_iterate( iter ) ) 
         {
-            DEBUGLOG( "Entry: [%s] %s[%s]=%s", current->group, current->identifier, current->key, current->data );
+            printf( "Group: %s, Identifier: %s, Key: %s, Data: %s\n", current->group, current->identifier, current->key, current->data );
         }
+        inireader_destroy_iterator( iter );
+        DEBUGLOG( "Iterate group \"array_group\"" );
+        for( iter = inireader_get_iterator( inifile, "array_group", 0, 0, 0 ), current = inireader_iterate( iter ); current != NULL; current = inireader_iterate( iter ) ) 
+        {
+            printf( "Group: %s, Identifier: %s, Key: %s, Data: %s\n", current->group, current->identifier, current->key, current->data );
+        }
+        inireader_destroy_iterator( iter );
+
     }
     DEBUGLOG( "Closing inifile" );
     inireader_close( inifile );

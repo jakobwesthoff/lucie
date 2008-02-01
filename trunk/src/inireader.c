@@ -51,6 +51,49 @@ int inireader_close( inifile_t* inifile )
     return true;
 }
 
+inireader_iterator_t* inireader_get_iterator( inifile_t* inifile, char* group, char* identifier, char* key, char* data ) 
+{
+    inireader_iterator_t* iter = ( inireader_iterator_t* )smalloc( sizeof( inireader_iterator_t ) );
+    iter->group = group;
+    iter->identifier = identifier;
+    iter->key = key;
+    iter->data = data;
+    iter->next = inifile->first;
+
+    return iter;
+}
+
+void inireader_reset( inifile_t* inifile, inireader_iterator_t* iter ) 
+{
+    iter->next = inifile->first;
+}
+
+inireader_entry_t* inireader_iterate( inireader_iterator_t* iter ) 
+{
+    inireader_entry_t* current = iter->next;
+    while( current != NULL ) 
+    {
+        if (
+                ( ( iter->group == NULL ) || !strcasecmp( current->group, iter->group ) )
+             && ( ( iter->identifier == NULL ) || !strcmp( current->identifier, iter->identifier ) )
+             && ( ( iter->key == NULL ) || !strcmp( current->key, iter->key ) )
+             && ( ( iter->data == NULL ) || !strcmp( current->data, iter->data ) )
+           )
+        {
+            iter->next = current->next;
+            return current;
+        }
+        current = current->next;
+    }
+    iter->next = NULL;
+    return NULL;
+}
+
+void inireader_destroy_iterator( inireader_iterator_t* iter ) 
+{
+    free( iter );
+}
+
 void inireader_free_inifile( inifile_t* inifile ) 
 {
     inireader_entry_t* current;    
