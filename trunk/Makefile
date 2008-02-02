@@ -32,3 +32,4 @@ $(LUCIE): $(LUCIE_C) $(LUCIE_H) $(LUA_A) $(EXTENSIONS)
 
 $(EXTENSIONS): $(EXTENSIONS:.so=.c) $(LUCIE_H) 
 	$(CC) -Wall -shared -Wl,-soname,$(@).1 -fPIC -I"$(LUA_INCLUDE)" -L"$(LUA_LIB)" -o $(@) $(@:.so=.c) $(CFLAGS)
+	$(STRIP) $(@)
