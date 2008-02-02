@@ -12,5 +12,10 @@ var_dump({
 			}
 		},
 		[io.write] = 4
-	});
-var_dump( "string", 423, 23.5, io.write, nil );
+	},
+	"string",
+	423,
+	23.5,
+	io.write,
+	nil
+);

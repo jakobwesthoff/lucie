@@ -94,8 +94,10 @@ int L_var_dump( lua_State* L )
     // moment I don't see an easy way to change this behaviour because of their
     // position on the stack.
     int i;
-    for( i = lua_gettop( L ); i > 0; i-- ) 
+    int elements = lua_gettop( L );
+    for( i = 1; i <= elements ; i++ ) 
     {
+        lua_pushvalue( L, i );
         var_dump( L, 0 );
     }
     return 0;
