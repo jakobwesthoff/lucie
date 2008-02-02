@@ -8,6 +8,8 @@
 
 #include "../lucie.h"
 
+extern int urldecode( char* data ); 
+
 void print_padded_line( int padding, const char* fmt, ... ) 
 {
     const char* spacer = "  ";
@@ -102,8 +104,21 @@ int L_var_dump( lua_State* L )
     return 0;
 }
 
+int L_urldecode( lua_State* L ) 
+{
+    const char* param;
+    char* data;
+    PARAM_STRING( param );
+    data = strdup( param );
+    urldecode( data );
+    RETURN_STRING( data );
+    free( data );
+    return 1;
+}
+
 void register_extension( lua_State *L ) 
 {
     REGISTER_EXTENSION( "core", "Jakob Westhoff", "jakob@westhoffswelt.de" );
     REGISTER_GLOBAL_FUNCTION( L_var_dump, var_dump );
+    REGISTER_GLOBAL_FUNCTION( L_urldecode, urldecode );
 }

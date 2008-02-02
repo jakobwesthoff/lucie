@@ -1,21 +1,5 @@
 #!./src/lucie
-var_dump({
-		["test"] = "foobar",
-		[1] = "baz",
-		[2] = {
-				["blub"] = "blab"
-		},
-		["zwölfdreizehn"] = {
-			[0] = {
-				["rekursion pur"] = "oder etwa nicht?",
-				[1] = "und noch einen mehr ;)"
-			}
-		},
-		[io.write] = 4
-	},
-	"string",
-	423,
-	23.5,
-	io.write,
-	nil
+var_dump(
+	urldecode("http://www.google.de?ich=bin+ganz+toll"),
+	urldecode("http://www.google.de?ich=bin%20ganz%20toll")
 );

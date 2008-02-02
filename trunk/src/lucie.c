@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <dlfcn.h>
 #include <libgen.h>
+#include <ctype.h>
 
 #include "lucie.h"
 #include "inireader.h"
@@ -53,6 +54,55 @@ int file_exists( const char* filename )
 		}
 	}
 	return true;
+}
+
+int urldecode( char* data ) 
+{
+    int i = 0;
+    int j = 0;
+    int len = 0;
+    char* result; 
+
+    len = strlen( data );
+    // Our new string is smaler than the old one, therefore the same size is
+    // definatly enough ( Null termination not needed )
+    result = smalloc( ( len ) * sizeof( char ) );
+    memset( result, 0, len );    
+    while( i < len ) 
+    {
+        if ( data[i] == '%' )
+        {
+            char c1, c2;           
+            i++;
+            c1 = tolower( data[i++] );
+            c2 = tolower( data[i++] );
+            if ( !isxdigit( c1 ) || !isxdigit( c2 ) ) 
+            {
+                THROW_ERROR( "Invalid hexadecimal character after %% escape sign." );
+                free( result );
+                return false;
+            }
+            // Convert hexadecimal number to character index
+            result[j++] = ( 16 * ( ( c1 <= '9' ) 
+                                 ? ( c1 - '0' ) 
+                                 : ( c1 - 'a' + 10 ) ) ) 
+                        + ( ( c2 <= '9' ) 
+                          ? ( c2 - '0' ) 
+                          : ( c2 - 'a' + 10 ) );
+        }
+        else if ( data[i] == '+' )
+        {
+            i++;
+            result[j++] = ' ';
+        }
+        else 
+        {
+            result[j++] = data[i++];
+        }
+    }
+    memcpy( data, result, len );
+    free( result );
+    return true;
 }
 
 void cleanup_registered_extensions()
