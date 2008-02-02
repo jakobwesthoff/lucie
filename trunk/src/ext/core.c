@@ -90,13 +90,12 @@ void var_dump( lua_State* L, int depth )
 
 int L_var_dump( lua_State* L ) 
 {
-    // At the moment the given parameters are dumped in inverse order. At the
-    // moment I don't see an easy way to change this behaviour because of their
-    // position on the stack.
     int i;
     int elements = lua_gettop( L );
     for( i = 1; i <= elements ; i++ ) 
     {
+        // We need to push the last value first, because the parameters are in
+        // inverted order on the stack
         lua_pushvalue( L, i );
         var_dump( L, 0 );
     }
