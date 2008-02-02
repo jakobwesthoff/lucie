@@ -1,9 +1,16 @@
 #!./src/lucie
-io.write("Hello world!\n");
-var_dump("test");
-var_dump(true);
-var_dump(false);
-var_dump(23.5);
-var_dump(42);
-var_dump(nil);
-var_dump(io.write);
+var_dump({
+		["test"] = "foobar",
+		[1] = "baz",
+		[2] = {
+				["blub"] = "blab"
+		},
+		["zwölfdreizehn"] = {
+			[0] = {
+				["rekursion pur"] = "oder etwa nicht?",
+				[1] = "und noch einen mehr ;)"
+			}
+		},
+		[io.write] = 4
+	});
+var_dump( "string", 423, 23.5, io.write, nil );

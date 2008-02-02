@@ -100,13 +100,36 @@ void var_dump( lua_State* L, int depth )
     {
         print_padded_line( depth, "string(%d) \"%s\"", lua_strlen( L, -1 ), lua_tostring( L, -1 ) );
     }
-    
+    else if( lua_istable( L, -1 ) ) 
+    {
+        print_padded_line( depth, "table(%i) {", lua_objlen( L, -1 ) );
+
+        // Push nil as first key before calling next
+        lua_pushnil( L );
+        while ( lua_next(L, -2 ) != 0 ) {            
+            if ( lua_isnumber( L, -2 ) ) 
+            {
+                print_padded_line( depth + 1, "[%i] =>", lua_tointeger( L, -2 ) );
+            }
+            else
+            {
+                print_padded_line( depth + 1, "[\"%s\"] =>", lua_tostring( L, -2 ) );                
+            }
+            var_dump( L, depth + 1 );
+        }
+        print_padded_line( depth, "}" );
+    }
+
     lua_pop( L, 1 );
 }
 
 int L_var_dump( lua_State* L ) 
 {
-    var_dump( L, 0 );
+    int i;
+    for( i = lua_gettop( L ); i > 0; i-- ) 
+    {
+        var_dump( L, 0 );
+    }
     return 0;
 }
 
