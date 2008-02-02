@@ -1,8 +1,9 @@
 #!./src/lucie
 io.write("Hello world!\n");
-core.foobar(true, "blub", 23);
-table = core.foobar2();
-for k,v in ipairs(table) do
-	io.write(k .. ": " .. v .. "\n");
-end
-foobar();
+var_dump("test");
+var_dump(true);
+var_dump(false);
+var_dump(23.5);
+var_dump(42);
+var_dump(nil);
+var_dump(io.write);
