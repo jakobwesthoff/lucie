@@ -56,12 +56,6 @@ void print_padded_line( int padding, const char* fmt, ... )
 
 void var_dump( lua_State* L, int depth ) 
 {
-    // Check for data on the stack
-    if ( lua_isnone( L, -1 ) )
-    {
-        return;
-    }
-
     // All the different datatypes need to be handled differently
     if ( lua_isnil( L, -1 ) ) 
     {
@@ -125,6 +119,9 @@ void var_dump( lua_State* L, int depth )
 
 int L_var_dump( lua_State* L ) 
 {
+    // At the moment the given parameters are dumped in inverse order. At the
+    // moment I don't see an easy way to change this behaviour because of their
+    // position on the stack.
     int i;
     for( i = lua_gettop( L ); i > 0; i-- ) 
     {
