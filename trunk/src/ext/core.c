@@ -7,6 +7,8 @@
 #include <lualib.h>
 
 #include "../lucie.h"
+#include "../inireader.h"
+#include "../btree.h"
 
 extern int urldecode( char* data ); 
 
@@ -116,9 +118,92 @@ int L_urldecode( lua_State* L )
     return 1;
 }
 
+void readini_array_traverse( lua_State* L, btree_element_t* root, int arrayindex ) 
+{
+    if ( root->next != NULL ) 
+    {
+        readini_array_traverse( L, root->next, ( ((inireader_entry_t*)root->next->data)->key != NULL ) ? arrayindex : arrayindex + 1 );
+    }
+
+    if ( ((inireader_entry_t*)root->next->data)->key != NULL ) 
+    {
+        lua_pushstring( L, ((inireader_entry_t*)root->next->data)->key );
+    }
+    else 
+    {
+        lua_pushnumber( L, arrayindex );
+    }
+    lua_settable( L, -3 );
+}
+
+void readini_tree_traverse( lua_State* L, btree_element_t* root )
+{
+    if ( root->left != NULL ) 
+    {
+        readini_tree_traverse( L, root->left );
+    }
+    if ( root->right != NULL ) 
+    {
+        readini_tree_traverse( L, root->right );
+    }
+
+    // Add the current element
+    // Push the index to the stack
+    lua_pushstring( L, ((inireader_entry_t* )root->data)->identifier );
+
+    // Push the data to the stack
+    if ( root->next != NULL || ((inireader_entry_t* )root->data)->key != NULL ) 
+    {
+        // The data is a table
+        lua_newtable( L );
+        readini_array_traverse( L, root, 1 );
+    }
+    else
+    {
+        // Simply push the data
+        lua_pushstring( L, ((inireader_entry_t*)root->data)->data );
+    }
+
+    // Add entry to table
+    lua_settable( L, -3 );
+}
+
+int L_readini( lua_State* L ) 
+{
+    const char* filename;
+    inifile_t* inifile         = NULL;
+    inireader_iterator_t* iter = NULL;
+    inireader_entry_t* current = NULL;
+    btree_element_t* root      = NULL;
+
+    PARAM_STRING( filename );
+
+    if ( ( inifile = inireader_open( filename ) ) == NULL ) 
+    {
+        return_error();
+    }
+
+    // Add every entry into a btree to get the arrays in piece later
+    root = btree_create();
+    iter = inireader_get_iterator( inifile, 0, 0, 0, 0 );
+    for ( current = inireader_iterate( iter ); current != NULL; current = inireader_iterate( iter ) ) 
+    {
+        btree_add( &root, current->identifier, current );
+    }
+    
+    // Traverse the tree and put our inivalues onto the lua stack
+    lua_newtable( L );
+    readini_tree_traverse( L, root );
+    btree_free( root );
+    inireader_close( inifile );
+    
+    return 1;
+}
+
 void register_extension( lua_State *L ) 
 {
     REGISTER_EXTENSION( "core", "Jakob Westhoff", "jakob@westhoffswelt.de" );
     REGISTER_GLOBAL_FUNCTION( L_var_dump, var_dump );
     REGISTER_GLOBAL_FUNCTION( L_urldecode, urldecode );
+    REGISTER_GLOBAL_FUNCTION( L_readini, readini );
 }

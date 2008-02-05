@@ -57,6 +57,20 @@ extern int file_exists( const char* filename );
         fprintf( stderr, "%s <%d>: %s\n\t%s\n", __FILE__, __LINE__, desc, errorstring );            \
     }
 
+#define return_error() \
+    {               \
+        RETURN_NIL(); \
+        if ( errno != 0 )                                                                               \
+        {                                                                                               \
+            RETURN_STRING( strerror( errno ) );      \
+        }                                            \
+        else                                         \
+        {                                            \
+            RETURN_STRING( errorstring );            \
+        }                                            \
+        return 2;                                    \
+    }
+
 #define REGISTER_EXTENSION(nameVal, authorVal, emailVal) \
     {                                                                                                                   \
         if ( extension_count == 0 )                                                                                     \
@@ -147,7 +161,7 @@ integer = lua_tointeger( L, -1 );                                               
     }
 
 #define RETURN_NIL() \
-    lua_pushnil( L, value );
+    lua_pushnil( L );
 
 #define RETURN_BOOLEAN(value) \
     lua_pushboolean( L, value );
