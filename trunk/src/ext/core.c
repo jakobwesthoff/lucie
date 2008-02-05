@@ -122,17 +122,24 @@ void readini_array_traverse( lua_State* L, btree_element_t* root, int arrayindex
 {
     if ( root->next != NULL ) 
     {
-        readini_array_traverse( L, root->next, ( ((inireader_entry_t*)root->next->data)->key != NULL ) ? arrayindex : arrayindex + 1 );
+        readini_array_traverse( L, root->next, ( ((inireader_entry_t*)root->next->data)->key != NULL ) ? ( arrayindex ) : ( arrayindex + 1 ) );
     }
 
-    if ( ((inireader_entry_t*)root->next->data)->key != NULL ) 
+    if ( ((inireader_entry_t*)root->data)->key != NULL ) 
     {
-        lua_pushstring( L, ((inireader_entry_t*)root->next->data)->key );
+        DEBUGLOG( "Pushing user defined sub index: %s", ((inireader_entry_t*)root->data)->key );
+        lua_pushstring( L, ((inireader_entry_t*)root->data)->key );
     }
     else 
     {
+        DEBUGLOG( "Pushing default sub index: %i", arrayindex );
         lua_pushnumber( L, arrayindex );
     }
+
+    // Push data value
+    lua_pushstring( L, ((inireader_entry_t*)root->data)->data );
+
+    DEBUGLOG( "Setting sub entry" );
     lua_settable( L, -3 );
 }
 
@@ -149,22 +156,27 @@ void readini_tree_traverse( lua_State* L, btree_element_t* root )
 
     // Add the current element
     // Push the index to the stack
+    DEBUGLOG( "Pushing main index: %s", ((inireader_entry_t* )root->data)->identifier );
     lua_pushstring( L, ((inireader_entry_t* )root->data)->identifier );
 
     // Push the data to the stack
     if ( root->next != NULL || ((inireader_entry_t* )root->data)->key != NULL ) 
     {
         // The data is a table
+        DEBUGLOG( "Creating sub table" );
         lua_newtable( L );
+        DEBUGLOG( "Traversing array list" );
         readini_array_traverse( L, root, 1 );
     }
     else
     {
         // Simply push the data
+        DEBUGLOG( "Pusing simple value: %s", ((inireader_entry_t*)root->data)->data );
         lua_pushstring( L, ((inireader_entry_t*)root->data)->data );
     }
 
     // Add entry to table
+    DEBUGLOG( "Adding main entry" );
     lua_settable( L, -3 );
 }
 
@@ -184,16 +196,21 @@ int L_readini( lua_State* L )
     }
 
     // Add every entry into a btree to get the arrays in piece later
+    DEBUGLOG( "Creating btree" );
     root = btree_create();
     iter = inireader_get_iterator( inifile, 0, 0, 0, 0 );
-    for ( current = inireader_iterate( iter ); current != NULL; current = inireader_iterate( iter ) ) 
+    DEBUGLOG( "Filling up btree" );
+    for ( current = inireader_iterate( iter ); current != NULL; current = inireader_iterate( iter ) )         
     {
+        DEBUGLOG( "Adding to btree: identifier: %s", current->identifier );
         btree_add( &root, current->identifier, current );
     }
     
     // Traverse the tree and put our inivalues onto the lua stack
-    lua_newtable( L );
+    DEBUGLOG( "Creating initial lua table" );
+    lua_newtable( L );    
     readini_tree_traverse( L, root );
+    DEBUGLOG( "Freeing btree" );
     btree_free( root );
     inireader_close( inifile );
     
