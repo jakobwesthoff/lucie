@@ -143,15 +143,15 @@ void readini_array_traverse( lua_State* L, btree_element_t* root, int arrayindex
     lua_settable( L, -3 );
 }
 
-void readini_tree_traverse( lua_State* L, btree_element_t* root )
+void readini_group_tree_traverse( lua_State* L, btree_element_t* root ) 
 {
     if ( root->left != NULL ) 
     {
-        readini_tree_traverse( L, root->left );
+        readini_group_tree_traverse( L, root->left );
     }
     if ( root->right != NULL ) 
     {
-        readini_tree_traverse( L, root->right );
+        readini_group_tree_traverse( L, root->right );
     }
 
     // Add the current element
@@ -180,13 +180,59 @@ void readini_tree_traverse( lua_State* L, btree_element_t* root )
     lua_settable( L, -3 );
 }
 
+void readini_tree_traverse( lua_State* L, btree_element_t* root )
+{
+    if ( root->left != NULL ) 
+    {
+        readini_tree_traverse( L, root->left );
+    }
+    if ( root->right != NULL ) 
+    {
+        readini_tree_traverse( L, root->right );
+    }
+
+    // Add a new array index for the current group
+    // Push the index to the stack
+    DEBUGLOG( "Pushing group index: %s", root->key );
+    lua_pushstring( L, root->key );
+
+    // Push the data to the stack
+    DEBUGLOG( "Creating group table" );
+    lua_newtable( L );
+    DEBUGLOG( "Traversing group tree" );
+    readini_group_tree_traverse( L, ( btree_element_t* )root->data );
+
+    // Add entry to table
+    DEBUGLOG( "Adding group entry" );
+    lua_settable( L, -3 );
+}
+
+
+void readini_tree_free( btree_element_t* root ) 
+{
+    // Traverse every node and free the subtree
+    if ( root->left != NULL ) 
+    {
+        readini_tree_free( root->left );
+    }
+    if( root->right != NULL ) 
+    {
+        readini_tree_free( root->right );
+    }
+
+    // Free the subtree
+    btree_free( ( btree_element_t* )root->data );
+}
+
 int L_readini( lua_State* L ) 
 {
     const char* filename;
-    inifile_t* inifile         = NULL;
-    inireader_iterator_t* iter = NULL;
-    inireader_entry_t* current = NULL;
-    btree_element_t* root      = NULL;
+    inifile_t* inifile            = NULL;
+    inireader_iterator_t* iter    = NULL;
+    inireader_entry_t* current    = NULL;
+    btree_element_t* root         = NULL;
+    btree_element_t* groupelement = NULL;
+    btree_element_t* grouproot    = NULL;
 
     PARAM_STRING( filename );
 
@@ -195,23 +241,44 @@ int L_readini( lua_State* L )
         return_error();
     }
 
-    // Add every entry into a btree to get the arrays in piece later
+    // Add every entry into a btree to get the arrays and groups in one piece later
     DEBUGLOG( "Creating btree" );
     root = btree_create();
     iter = inireader_get_iterator( inifile, 0, 0, 0, 0 );
     DEBUGLOG( "Filling up btree" );
     for ( current = inireader_iterate( iter ); current != NULL; current = inireader_iterate( iter ) )         
     {
-        DEBUGLOG( "Adding to btree: identifier: %s", current->identifier );
-        btree_add( &root, current->identifier, current );
+        DEBUGLOG( "Searching for or adding group: %s", current->group );
+        // Find group element
+        groupelement = btree_find( root, current->group );        
+        if ( groupelement == NULL ) 
+        {
+            // A new grouproot needs to be created
+            DEBUGLOG( "Creating new grouproot" );
+            grouproot = btree_create();
+            btree_add( &root, current->group, grouproot );
+        }
+        else 
+        {
+            // Retrieve the already added grouproot
+            DEBUGLOG( "Setting grouproot" );
+            grouproot = ( btree_element_t* )groupelement->data;
+        }
+
+        // Add the new element to the grouptree
+        btree_add( &grouproot, current->identifier, current );
     }
     
     // Traverse the tree and put our inivalues onto the lua stack
     DEBUGLOG( "Creating initial lua table" );
     lua_newtable( L );    
     readini_tree_traverse( L, root );
-    DEBUGLOG( "Freeing btree" );
+    DEBUGLOG( "Freeing the btree data" );
+    // Free the group trees
+    readini_tree_free( root );
+    // Free the main tree
     btree_free( root );
+    // Close the inifile
     inireader_close( inifile );
     
     return 1;

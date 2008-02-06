@@ -12,6 +12,7 @@ typedef struct btree_element_struct
 
 btree_element_t* btree_create();
 void btree_add( btree_element_t** root, char* key, void* data );
+btree_element_t* btree_find( btree_element_t* root, char* key );
 void btree_free( btree_element_t* root );
 
 #endif
