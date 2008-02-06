@@ -380,6 +380,48 @@ void init_superglobals( lua_State* L )
         }
     }
     lua_setglobal( L, "_POST" );
+
+    // Create and fillup _HEADER table
+    lua_newtable( L );
+    {
+       char** env;
+       // Loop through all defined environment variables
+       for( env = environ; *env; env++ ) 
+       {      
+           int i;
+           int len;
+           char* envdata;
+
+           if( strstr( *env, "HTTP_" ) != *env ) 
+           {
+               // The variable name does not start with HTTP_
+               continue;
+           }
+           
+           // Split at the equal sign
+           envdata = strdup( *env );
+           len = strlen( envdata );
+           for( i = 5; i < len; i++ ) 
+           {
+               if ( envdata[i] == '=' ) 
+               {
+                   envdata[i] = 0;
+                   break;
+               }
+           }
+           
+           // Push the key, without the HTTP_
+           lua_pushstring( L, envdata + 5 );
+           // Push the data
+           lua_pushstring( L, envdata + strlen(envdata) + 1 );
+           // Add the table entry
+           lua_settable( L, -3 );
+
+           // Free the temporary string
+           free( envdata );
+       }
+    }
+    lua_setglobal( L, "_HEADER" );
 }
 
 int main( int argc, char** argv )
