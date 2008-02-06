@@ -7,6 +7,8 @@
 #include "lucie.h"
 #include "inireader.h"
 
+extern char **environ;
+
 int extension_count;
 extension_t **extensions;
 
@@ -137,7 +139,7 @@ void register_extensions( lua_State* L )
 
     // First try to read the configpath from the LUCIE_CONFIG_PATH environment
     // variable
-    lucie_config_path_env = getenv( "LUCIE_CONFIG_PATH" );
+    lucie_config_path_env = getenv( "LUCIE_CONFIG_FILE" );
     if ( lucie_config_path_env != NULL ) 
     {
         if ( file_exists( lucie_config_path_env ) ) 
@@ -220,6 +222,138 @@ void register_extensions( lua_State* L )
     }
 }
 
+void add_env_variable( lua_State* L,  const char* key, const char* env ) 
+{
+    char* envdata;
+    
+    DEBUGLOG( "Registering env variable: %s", env );
+
+    // Put the key onto the stack
+    lua_pushstring( L, key );
+
+    // Put the environment data onto the stack
+    envdata = getenv( env );
+    if ( envdata == NULL ) 
+    {
+        lua_pushstring( L, "" );
+    }
+    else 
+    {
+        lua_pushstring( L, envdata );
+    }
+
+    lua_settable( L, -3 );
+}
+
+void init_superglobals( lua_State* L ) 
+{
+    // Create and fillup the _SERVER table
+    lua_newtable( L );
+    {
+        add_env_variable( L, "SOFTWARE", "SERVER_SOFTWARE" );
+        add_env_variable( L, "NAME", "SERVER_NAME" );
+        add_env_variable( L, "GATEWAY_INTERFACE", "GATEWAY_INTERFACE" );
+        add_env_variable( L, "PROTOCOL", "SERVER_PROTOCOL" );
+        add_env_variable( L, "PORT", "SERVER_PORT" );
+        add_env_variable( L, "REQUEST_METHOD", "REQUEST_METHOD" );
+        add_env_variable( L, "PATH_INFO", "PATH_INFO" );
+        add_env_variable( L, "PATH_TRANSLATED", "PATH_TRANSLATED" );
+        add_env_variable( L, "SCRIPT_NAME", "SCRIPT_NAME" );
+        add_env_variable( L, "QUERY_STRING", "QUERY_STRING" );
+        add_env_variable( L, "REMOTE_HOST", "REMOTE_HOST" );
+        add_env_variable( L, "REMOTE_ADDR", "REMOTE_ADDR" );
+        add_env_variable( L, "AUTH_TYPE", "AUTH_TYPE" );
+        add_env_variable( L, "REMOTE_USER", "REMOTE_USER" );
+        add_env_variable( L, "REMOTE_IDENT", "REMOTE_IDENT" );
+        add_env_variable( L, "CONTENT_TYPE", "CONTENT_TYPE" );
+        add_env_variable( L, "CONTENT_LENGTH", "CONTENT_LENGTH" );
+    }
+    lua_setglobal( L, "_SERVER" );
+
+    // Create and fillup _GET table
+    lua_newtable( L );
+    {
+        int entries        = 1;
+        char* query_string = getenv( "QUERY_STRING" );
+        int len            = 0;
+        if ( query_string != NULL && strcmp( query_string, "" ) ) 
+        {           
+            // Split the query string at every & sign
+            int i;
+            len = strlen( query_string );
+            for ( i = 0; i < len; i++ ) 
+            {
+                if ( query_string[i] == '&' ) 
+                {
+                    query_string[i] = 0;
+                    entries++;
+                }
+            }
+
+            // Loop through all get key value pairs
+            while( entries > 0 ) 
+            {
+                int found_equalsign = false;
+
+                // Split at the = sign
+                len = strlen( query_string );
+                for( i = 0; i < len; i++ ) 
+                {
+                    if ( query_string[i] == '=' ) 
+                    {
+                        query_string[i] = 0;
+                        found_equalsign = true;
+                        break;
+                    }
+                }
+                
+                // Decode and push the key
+                {
+                    char* decoded = strdup( query_string );
+                    if ( urldecode( decoded ) ) 
+                    {
+                        lua_pushstring( L, decoded );
+                    }
+                    free( decoded );
+                }
+
+                // Decode and push value or boolean true
+                if ( found_equalsign ) 
+                {
+                    query_string = query_string + strlen( query_string ) + 1;
+                    {
+                        char* decoded = strdup( query_string );
+                        if ( urldecode( decoded ) ) 
+                        {
+                            lua_pushstring( L, decoded );
+                        }
+                        free( decoded );
+                    }
+                }
+                else 
+                {
+                    lua_pushboolean( L, true );
+                }
+                                
+                // Set the table entry
+                lua_settable( L, -3 );
+
+                // Advance to next entry
+                query_string = query_string + strlen( query_string ) + 1;
+                entries--;
+            }
+        }
+    }
+    lua_setglobal( L, "_GET" );
+
+    // Create and fillup _POST table
+    lua_newtable( L );
+    {
+
+    }
+    lua_setglobal( L, "_POST" );
+}
+
 int main( int argc, char** argv )
 {    
     const char* name    = "LUCIE - Lua common internet environment";
@@ -252,6 +386,9 @@ int main( int argc, char** argv )
     DEBUGLOG( "Registering extensions" );
     register_extensions( L );
     DEBUGLOG( "All extensions registered" );
+
+    DEBUGLOG( "Converting cgi environment to superglobals" );
+    init_superglobals( L );
 
     // Load the script for execution
     DEBUGLOG( "Trying to load lua file: %s", argv[1] );
