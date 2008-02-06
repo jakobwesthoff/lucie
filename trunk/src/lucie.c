@@ -361,19 +361,23 @@ void init_superglobals( lua_State* L )
         char* postdata       = NULL;
         int readBytes        = 0;
         int overallReadBytes = 0;
+        char* contentType    = getenv( "CONTENT_TYPE" );
 
-        postdata = smalloc( sizeof( char ) * 1024 );
-        memset( postdata, 0, 1024 );
-        
-        while( ( readBytes = fread( postdata + overallReadBytes, sizeof( char ), 1023, stdin ) ) != 0 ) 
+        if ( contentType != NULL && !strcmp( contentType, "application/x-www-form-urlencoded" ) ) 
         {
-            overallReadBytes += readBytes;
-            postdata = srealloc( postdata, sizeof( char ) * ( overallReadBytes + 1024 ) );
-            memset( postdata + overallReadBytes, 0, 1024 );
-        }
+            postdata = smalloc( sizeof( char ) * 1024 );
+            memset( postdata, 0, 1024 );
+            
+            while( ( readBytes = fread( postdata + overallReadBytes, sizeof( char ), 1023, stdin ) ) != 0 ) 
+            {
+                overallReadBytes += readBytes;
+                postdata = srealloc( postdata, sizeof( char ) * ( overallReadBytes + 1024 ) );
+                memset( postdata + overallReadBytes, 0, 1024 );
+            }
 
-        decode_url_parameter_string( L, postdata );
-        free( postdata );
+            decode_url_parameter_string( L, postdata );
+            free( postdata );
+        }
     }
     lua_setglobal( L, "_POST" );
 }
