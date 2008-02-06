@@ -7,12 +7,7 @@
 #include "lucie.h"
 #include "inireader.h"
 
-extern char **environ;
-
-int extension_count;
-extension_t **extensions;
-
-char errorstring[4096];
+#include "lucieP.h"
 
 void* smalloc( size_t bytes )
 {
@@ -249,11 +244,16 @@ void decode_url_parameter_string( lua_State* L, const char* data )
 {
     int entries = 1;
     int len     = 0;
-    char* query_string    = strdup( data );
-    char* pointer_to_free = query_string;
 
-    if ( query_string != NULL && strcmp( query_string, "" ) ) 
+    if ( data != NULL && strcmp( data, "" ) ) 
     {           
+        char* query_string;
+        char* pointer_to_free;
+        
+        // Copy the data to work on it
+        query_string = strdup( data );
+        pointer_to_free = query_string;
+
         // Split the query string at every & sign
         int i;
         len = strlen( query_string );
@@ -318,9 +318,9 @@ void decode_url_parameter_string( lua_State* L, const char* data )
             query_string = query_string + strlen( query_string ) + 1;
             entries--;
         }
+        
+        free( pointer_to_free );
     }
-
-    free( pointer_to_free );
 }
 
 void init_superglobals( lua_State* L ) 
@@ -350,6 +350,7 @@ void init_superglobals( lua_State* L )
 
     // Create and fillup _GET table
     lua_newtable( L );
+    DEBUGLOG( "Decoding query_string" );
     {
         decode_url_parameter_string( L, getenv( "QUERY_STRING" ) );
     }
@@ -357,6 +358,7 @@ void init_superglobals( lua_State* L )
 
     // Create and fillup _POST table
     lua_newtable( L );
+    DEBUGLOG( "Decoding post data" );
     {        
         char* postdata       = NULL;
         int readBytes        = 0;
@@ -383,6 +385,7 @@ void init_superglobals( lua_State* L )
 
     // Create and fillup _HEADER table
     lua_newtable( L );
+    DEBUGLOG( "Setting _HEADER" );
     {
        char** env;
        // Loop through all defined environment variables
@@ -422,6 +425,167 @@ void init_superglobals( lua_State* L )
        }
     }
     lua_setglobal( L, "_HEADER" );
+}
+
+const char* lucie_reader( lua_State* L, void* data, size_t* size ) 
+{
+    static char* output_buffer;    
+
+    // Check if we have already read the whole file.
+    if ( feof( (FILE*)data ) ) 
+    {
+        // Free the buffer and return null
+        free( output_buffer );
+        return NULL;
+    }
+
+    {
+        char* reading_buffer;
+        char* working_buffer;
+        int filesize       = 0;
+        int processedBytes = 0;
+
+        // Get size of the script to load;
+        fseek( (FILE*)data, 0, SEEK_END );
+        filesize = ftell( (FILE*)data );
+        fseek( (FILE*)data, 0, SEEK_SET );
+
+        // Allocate space for it
+        reading_buffer = smalloc( filesize + 1 );
+        working_buffer = smalloc( filesize + 1 );
+        memset( reading_buffer, 0, filesize + 1 );
+        memset( working_buffer, 0, filesize + 1 );
+
+        // Read the file into memory
+        fread( reading_buffer, sizeof( char ), filesize, (FILE*)data );
+        
+        {
+            // We need to remember certain values during the processing
+            enum { HTML=1, HTML_LONG_BRACKET, CHUNK, LINE_COMMENT, POSSIBLE_COMMENT, COMMENT, POSSIBLE_COMMENT_END, LONG_BRACKET_STRING, POSSIBLE_LONG_BRACKET_STRING_END, SINGLE_QUOTED_STRING, DOUBLE_QUOTED_STRING, LONG_BRACKET } state = 1;
+            int htmllevel          = 0;
+            int possiblehtmllevel  = 0;
+            int chunklevel         = 0;
+            int possiblechunklevel = 0;
+            int i = 0;
+
+            while( i < filesize ) 
+            {
+                if ( state == HTML && reading_buffer[i] == '<' && reading_buffer[i+1] == '?' && reading_buffer[i+2] == 'l' && reading_buffer[i+3] == 'u' && reading_buffer[i+4] == 'c' && reading_buffer[i+5] == 'i' && reading_buffer[i+6] == 'e' ) 
+                {
+                    // Lucie starttag found
+                }
+                else if ( state == HTML && reading_buffer[i] == ']' && reading_buffer[i+1] == '=' ) 
+                {
+                    // Possible HTML_LONG_BRACKET
+                }
+                else if ( state == HTML ) 
+                {
+                    // HTML content
+                }
+                else if ( state == HTML_LONG_BRACKET && reading_buffer[i] == '=' ) 
+                {
+                    // Possible next long bracket level
+                }
+                else if ( state == HTML_LONG_BRACKET && reading_buffer[i] == ']' ) 
+                {
+                    // possible long bracket is new bracket level
+                }
+                else if ( state == HTML_LONG_BRACKET ) 
+                {
+                    // We were wrong there was no long bracket
+                }
+                else if ( state == CHUNK && reading_buffer[i] == '?' && reading_buffer[i+1] == '>' ) 
+                {
+                    // Lucie endtag
+                }
+                else if ( state == CHUNK && reading_buffer[i] == '-' && reading_buffer[i+1] == '-' && reading_buffer[i+2] == '[' ) 
+                {
+                    // Possible comment area
+                }
+                else if ( state == CHUNK && reading_buffer[i] == '-' && reading_buffer[i+1] == '-' ) 
+                {
+                    // Line comment
+                }
+                else if ( state == CHUNK && reading_buffer[i] == '[' && reading_buffer[i+1] == '[' ) 
+                {
+                    // Zero level long bracket found
+                }
+                else if ( state == CHUNK && reading_buffer[i] == '[' && reading_buffer[i+1] == '=' ) 
+                {
+                    // Possible long bracket
+                }
+                else if ( state == CHUNK && reading_buffer[i] == '"' ) 
+                {
+                    // Double quoted string
+                }
+                else if ( state == CHUNK && reading_buffer[i] == '\'' ) 
+                {
+                    // Single quoted string
+                }
+                else if ( state == POSSIBLE_COMMENT && reading_buffer[i] == '=' ) 
+                {
+                    // Possible new comment level
+                }
+                else if ( state == POSSIBLE_COMMENT && reading_buffer[i] == ']' ) 
+                {
+                    // New comment level is affirmative
+                }
+                else if ( state == POSSIBLE_COMMENT ) 
+                {
+                    // We were wrong about the comment level
+                }
+                else if ( state == LINE_COMMENT && ( reading_buffer[i] == '\n' || ( reading_buffer[i] == '\r' && reading_buffer[i+1] == '\n' ) ) )
+                {
+                    // Line comment end
+                }
+                else if ( state == COMMENT && reading_buffer[i] == ']' ) 
+                {
+                    // Possible comment end
+                }
+                else if ( state == POSSIBLE_COMMENT_END && reading_buffer[i] == '=' ) 
+                {
+                    // Possible new comment end level
+                }
+                else if ( state == POSSIBLE_COMMENT_END && reading_buffer[i] == ']' ) 
+                {
+                    // We have a new comment end level. We need to check if it is the end of comment though
+                }
+                else if ( state == LONG_BRACKET_STRING && reading_buffer[i] == ']' ) 
+                {
+                    // Possible string end
+                }
+                else if ( state == POSSIBLE_LONG_BRACKET_STRING_END && reading_buffer[i] == '=' ) 
+                {
+                    // Possible new string end level
+                }
+                else if ( state == POSSIBLE_LONG_BRACKET_STRING_END && reading_buffer[i] == ']' ) 
+                {
+                    // We have a new string end level. We need to check if it is the end of the string though
+                }
+                else if ( state == SINGLE_QUOTED_STRING && reading_buffer[i] == '\\' && reading_buffer[i+1] == '\'' ) 
+                {
+                    // No string end 
+                }
+                else if ( state == SINGLE_QUOTED_STRING && reading_buffer[i] == '\'' ) 
+                {
+                    // Single quoted string ends here
+                }
+                else if ( state == DOUBLE_QUOTED_STRING && reading_buffer[i] == '\\' && reading_buffer[i+1] == '"' ) 
+                {
+                    // No string end 
+                }
+                else if ( state == DOUBLE_QUOTED_STRING && reading_buffer[i] == '"' ) 
+                {
+                    // Double quoted string ends here
+                }
+                else
+                {
+                    // Nothing special just copy
+                }
+            }
+        }
+        free( reading_buffer );
+    }
 }
 
 int main( int argc, char** argv )
