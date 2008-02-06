@@ -245,6 +245,84 @@ void add_env_variable( lua_State* L,  const char* key, const char* env )
     lua_settable( L, -3 );
 }
 
+void decode_url_parameter_string( lua_State* L, const char* data )
+{
+    int entries = 1;
+    int len     = 0;
+    char* query_string    = strdup( data );
+    char* pointer_to_free = query_string;
+
+    if ( query_string != NULL && strcmp( query_string, "" ) ) 
+    {           
+        // Split the query string at every & sign
+        int i;
+        len = strlen( query_string );
+        for ( i = 0; i < len; i++ ) 
+        {
+            if ( query_string[i] == '&' ) 
+            {
+                query_string[i] = 0;
+                entries++;
+            }
+        }
+
+        // Loop through all get key value pairs
+        while( entries > 0 ) 
+        {
+            int found_equalsign = false;
+
+            // Split at the = sign
+            len = strlen( query_string );
+            for( i = 0; i < len; i++ ) 
+            {
+                if ( query_string[i] == '=' ) 
+                {
+                    query_string[i] = 0;
+                    found_equalsign = true;
+                    break;
+                }
+            }
+            
+            // Decode and push the key
+            {
+                char* decoded = strdup( query_string );
+                if ( urldecode( decoded ) ) 
+                {
+                    lua_pushstring( L, decoded );
+                }
+                free( decoded );
+            }
+
+            // Decode and push value or boolean true
+            if ( found_equalsign ) 
+            {
+                query_string = query_string + strlen( query_string ) + 1;
+                {
+                    char* decoded = strdup( query_string );
+                    if ( urldecode( decoded ) ) 
+                    {
+                        lua_pushlstring( L, decoded, strlen( decoded ) );
+                    }
+                    free( decoded );
+                }
+            }
+            else 
+            {
+                lua_pushboolean( L, true );
+            }
+                            
+            // Set the table entry
+            lua_settable( L, -3 );
+
+            // Advance to next entry
+            query_string = query_string + strlen( query_string ) + 1;
+            entries--;
+        }
+    }
+
+    free( pointer_to_free );
+}
+
 void init_superglobals( lua_State* L ) 
 {
     // Create and fillup the _SERVER table
@@ -273,83 +351,29 @@ void init_superglobals( lua_State* L )
     // Create and fillup _GET table
     lua_newtable( L );
     {
-        int entries        = 1;
-        char* query_string = getenv( "QUERY_STRING" );
-        int len            = 0;
-        if ( query_string != NULL && strcmp( query_string, "" ) ) 
-        {           
-            // Split the query string at every & sign
-            int i;
-            len = strlen( query_string );
-            for ( i = 0; i < len; i++ ) 
-            {
-                if ( query_string[i] == '&' ) 
-                {
-                    query_string[i] = 0;
-                    entries++;
-                }
-            }
-
-            // Loop through all get key value pairs
-            while( entries > 0 ) 
-            {
-                int found_equalsign = false;
-
-                // Split at the = sign
-                len = strlen( query_string );
-                for( i = 0; i < len; i++ ) 
-                {
-                    if ( query_string[i] == '=' ) 
-                    {
-                        query_string[i] = 0;
-                        found_equalsign = true;
-                        break;
-                    }
-                }
-                
-                // Decode and push the key
-                {
-                    char* decoded = strdup( query_string );
-                    if ( urldecode( decoded ) ) 
-                    {
-                        lua_pushstring( L, decoded );
-                    }
-                    free( decoded );
-                }
-
-                // Decode and push value or boolean true
-                if ( found_equalsign ) 
-                {
-                    query_string = query_string + strlen( query_string ) + 1;
-                    {
-                        char* decoded = strdup( query_string );
-                        if ( urldecode( decoded ) ) 
-                        {
-                            lua_pushstring( L, decoded );
-                        }
-                        free( decoded );
-                    }
-                }
-                else 
-                {
-                    lua_pushboolean( L, true );
-                }
-                                
-                // Set the table entry
-                lua_settable( L, -3 );
-
-                // Advance to next entry
-                query_string = query_string + strlen( query_string ) + 1;
-                entries--;
-            }
-        }
+        decode_url_parameter_string( L, getenv( "QUERY_STRING" ) );
     }
     lua_setglobal( L, "_GET" );
 
     // Create and fillup _POST table
     lua_newtable( L );
-    {
+    {        
+        char* postdata       = NULL;
+        int readBytes        = 0;
+        int overallReadBytes = 0;
 
+        postdata = smalloc( sizeof( char ) * 1024 );
+        memset( postdata, 0, 1024 );
+        
+        while( ( readBytes = fread( postdata + overallReadBytes, sizeof( char ), 1023, stdin ) ) != 0 ) 
+        {
+            overallReadBytes += readBytes;
+            postdata = srealloc( postdata, sizeof( char ) * ( overallReadBytes + 1024 ) );
+            memset( postdata + overallReadBytes, 0, 1024 );
+        }
+
+        decode_url_parameter_string( L, postdata );
+        free( postdata );
     }
     lua_setglobal( L, "_POST" );
 }
