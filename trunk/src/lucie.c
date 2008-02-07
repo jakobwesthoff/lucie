@@ -440,10 +440,9 @@ const char* lucie_reader( lua_State* L, void* data, size_t* size )
     }
 
     {
-        char* reading_buffer;
-        char* working_buffer;
+        char* reading_buffer = NULL;
+        char* working_buffer = NULL;
         int filesize       = 0;
-        int processedBytes = 0;
 
         // Get size of the script to load;
         fseek( (FILE*)data, 0, SEEK_END );
@@ -452,139 +451,299 @@ const char* lucie_reader( lua_State* L, void* data, size_t* size )
 
         // Allocate space for it
         reading_buffer = smalloc( filesize + 1 );
-        working_buffer = smalloc( filesize + 1 );
         memset( reading_buffer, 0, filesize + 1 );
-        memset( working_buffer, 0, filesize + 1 );
 
         // Read the file into memory
         fread( reading_buffer, sizeof( char ), filesize, (FILE*)data );
-        
         {
             // We need to remember certain values during the processing
-            enum { HTML=1, HTML_LONG_BRACKET, CHUNK, LINE_COMMENT, POSSIBLE_COMMENT, COMMENT, POSSIBLE_COMMENT_END, LONG_BRACKET_STRING, POSSIBLE_LONG_BRACKET_STRING_END, SINGLE_QUOTED_STRING, DOUBLE_QUOTED_STRING, LONG_BRACKET } state = 1;
-            int htmllevel          = 0;
-            int possiblehtmllevel  = 0;
+            enum { HTML=1, HTML_LONG_BRACKET, CHUNK, LINE_COMMENT, POSSIBLE_COMMENT, COMMENT, POSSIBLE_COMMENT_END, LONG_BRACKET_STRING, POSSIBLE_LONG_BRACKET_STRING, POSSIBLE_LONG_BRACKET_STRING_END, SINGLE_QUOTED_STRING, DOUBLE_QUOTED_STRING, LONG_BRACKET } state = 1;
+            int htmllevel          = 1;
+            int possiblehtmllevel  = 1;
             int chunklevel         = 0;
             int possiblechunklevel = 0;
+            char* html_buffer = NULL;
             int i = 0;
+
+            DYNAMIC_STRING_INIT( html_buffer );
+            DYNAMIC_STRING_INIT( working_buffer );
 
             while( i < filesize ) 
             {
                 if ( state == HTML && reading_buffer[i] == '<' && reading_buffer[i+1] == '?' && reading_buffer[i+2] == 'l' && reading_buffer[i+3] == 'u' && reading_buffer[i+4] == 'c' && reading_buffer[i+5] == 'i' && reading_buffer[i+6] == 'e' ) 
-                {
+                {                                        
                     // Lucie starttag found
+                    int j = 0;
+                    state = CHUNK;
+                    DYNAMIC_STRING_ADD( working_buffer, "io.write([" );
+                    for( j = 0 ; j <= htmllevel; j++ ) 
+                    {
+                        DYNAMIC_STRING_ADD( working_buffer, "=" );
+                    }
+                    DYNAMIC_STRING_ADD( working_buffer, "[\n" );
+                    DYNAMIC_STRING_ADD( working_buffer, html_buffer );
+                    DYNAMIC_STRING_ADD( working_buffer, "]" );
+                    for( j = 0 ; j <= htmllevel; j++ ) 
+                    {
+                        DYNAMIC_STRING_ADD( working_buffer, "=" );
+                    }
+                    DYNAMIC_STRING_ADD( working_buffer, "]);\n" );                    
+                    i += 7;
                 }
                 else if ( state == HTML && reading_buffer[i] == ']' && reading_buffer[i+1] == '=' ) 
                 {
                     // Possible HTML_LONG_BRACKET
+                    state = HTML_LONG_BRACKET;
+                    possiblehtmllevel = 0;                    
+                    DYNAMIC_STRING_ADD_CHAR( html_buffer, reading_buffer[i] );                    
+                    i++;
                 }
                 else if ( state == HTML ) 
                 {
                     // HTML content
+                    DYNAMIC_STRING_ADD_CHAR( html_buffer, reading_buffer[i] );                    
+                    i++;
                 }
                 else if ( state == HTML_LONG_BRACKET && reading_buffer[i] == '=' ) 
                 {
                     // Possible next long bracket level
+                    possiblehtmllevel++;
+                    DYNAMIC_STRING_ADD_CHAR( html_buffer, reading_buffer[i] );                    
+                    i++;
                 }
                 else if ( state == HTML_LONG_BRACKET && reading_buffer[i] == ']' ) 
                 {
                     // possible long bracket is new bracket level
+                    state = HTML;
+                    htmllevel = ( possiblehtmllevel > htmllevel ) ? possiblehtmllevel : htmllevel;
+                    DYNAMIC_STRING_ADD_CHAR( html_buffer, reading_buffer[i] );                    
+                    i++;
                 }
                 else if ( state == HTML_LONG_BRACKET ) 
                 {
                     // We were wrong there was no long bracket
+                    state = HTML;
+                    DYNAMIC_STRING_ADD_CHAR( html_buffer, reading_buffer[i] );                    
+                    i++;
                 }
                 else if ( state == CHUNK && reading_buffer[i] == '?' && reading_buffer[i+1] == '>' ) 
                 {
                     // Lucie endtag
+                    state = HTML;
+                    DYNAMIC_STRING_INIT( html_buffer );
+                    htmllevel = 0;
+                    i += 2;
                 }
                 else if ( state == CHUNK && reading_buffer[i] == '-' && reading_buffer[i+1] == '-' && reading_buffer[i+2] == '[' ) 
                 {
                     // Possible comment area
+                    state = POSSIBLE_COMMENT;
+                    DYNAMIC_STRING_ADD( working_buffer, "--[" );
+                    i += 3;
                 }
                 else if ( state == CHUNK && reading_buffer[i] == '-' && reading_buffer[i+1] == '-' ) 
                 {
                     // Line comment
+                    state = LINE_COMMENT;
+                    i += 2;
                 }
                 else if ( state == CHUNK && reading_buffer[i] == '[' && reading_buffer[i+1] == '[' ) 
                 {
                     // Zero level long bracket found
+                    state = LONG_BRACKET_STRING;
+                    chunklevel = 0;
+                    DYNAMIC_STRING_ADD( working_buffer, "[[" );
+                    i += 2;
                 }
                 else if ( state == CHUNK && reading_buffer[i] == '[' && reading_buffer[i+1] == '=' ) 
-                {
+                {                    
                     // Possible long bracket
+                    state = POSSIBLE_LONG_BRACKET_STRING;
+                    possiblechunklevel = 0;
+                    DYNAMIC_STRING_ADD_CHAR( working_buffer, reading_buffer[i] );
+                    i++;
+                }
+                else if ( state == POSSIBLE_LONG_BRACKET_STRING && reading_buffer[i] == '=' ) 
+                {
+                    // Possible new string level
+                    possiblechunklevel++;
+                    DYNAMIC_STRING_ADD_CHAR( working_buffer, reading_buffer[i] );                    
+                    i++;
+                }
+                else if ( state == POSSIBLE_LONG_BRACKET_STRING && reading_buffer[i] == ']' ) 
+                {
+                    // We have a new string level.
+                    state = LONG_BRACKET_STRING;
+                    chunklevel = possiblechunklevel;
+                    DYNAMIC_STRING_ADD_CHAR( working_buffer, reading_buffer[i] );                    
+                    i++;
                 }
                 else if ( state == CHUNK && reading_buffer[i] == '"' ) 
                 {
                     // Double quoted string
+                    state = DOUBLE_QUOTED_STRING;
+                    DYNAMIC_STRING_ADD_CHAR( working_buffer, reading_buffer[i] );                    
+                    i++;
                 }
                 else if ( state == CHUNK && reading_buffer[i] == '\'' ) 
                 {
                     // Single quoted string
+                    state = SINGLE_QUOTED_STRING;
+                    DYNAMIC_STRING_ADD_CHAR( working_buffer, reading_buffer[i] );                    
+                    i++;
                 }
                 else if ( state == POSSIBLE_COMMENT && reading_buffer[i] == '=' ) 
                 {
                     // Possible new comment level
+                    possiblechunklevel++;
+                    DYNAMIC_STRING_ADD_CHAR( working_buffer, reading_buffer[i] );                    
+                    i++;
                 }
                 else if ( state == POSSIBLE_COMMENT && reading_buffer[i] == ']' ) 
                 {
                     // New comment level is affirmative
+                    state = COMMENT;
+                    chunklevel = possiblechunklevel;
+                    DYNAMIC_STRING_ADD_CHAR( working_buffer, reading_buffer[i] );                    
+                    i++;
+                }
+                else if ( state == POSSIBLE_COMMENT && ( reading_buffer[i] == '\n' || ( reading_buffer[i] == '\r' && reading_buffer[i+1] == '\n' ) ) )
+                {
+                    // It was just a line comment and is ended now
+                    state = CHUNK;
+                    DYNAMIC_STRING_ADD( working_buffer, "\n" );
+                    i++;
                 }
                 else if ( state == POSSIBLE_COMMENT ) 
                 {
                     // We were wrong about the comment level
+                    // We are just inside a simple line comment
+                    state = LINE_COMMENT;
+                    DYNAMIC_STRING_ADD_CHAR( working_buffer, reading_buffer[i] );                    
+                    i++;
                 }
                 else if ( state == LINE_COMMENT && ( reading_buffer[i] == '\n' || ( reading_buffer[i] == '\r' && reading_buffer[i+1] == '\n' ) ) )
                 {
                     // Line comment end
+                    state = CHUNK;
+                    DYNAMIC_STRING_ADD( working_buffer, "\n" );
+                    i++;
                 }
                 else if ( state == COMMENT && reading_buffer[i] == ']' ) 
                 {
                     // Possible comment end
+                    state = POSSIBLE_COMMENT_END;
+                    possiblechunklevel = 0;
+                    DYNAMIC_STRING_ADD_CHAR( working_buffer, reading_buffer[i] );
+                    i++;
                 }
                 else if ( state == POSSIBLE_COMMENT_END && reading_buffer[i] == '=' ) 
                 {
                     // Possible new comment end level
+                    possiblechunklevel++;
+                    DYNAMIC_STRING_ADD_CHAR( working_buffer, reading_buffer[i] );
+                    i++;
                 }
                 else if ( state == POSSIBLE_COMMENT_END && reading_buffer[i] == ']' ) 
                 {
                     // We have a new comment end level. We need to check if it is the end of comment though
+                    if ( possiblechunklevel == chunklevel ) 
+                    {
+                        state = CHUNK;                        
+                    }
+                    else 
+                    {
+                        possiblechunklevel = 0;
+                    }
+                    DYNAMIC_STRING_ADD_CHAR( working_buffer, reading_buffer[i] );
+                    i++;
                 }
                 else if ( state == LONG_BRACKET_STRING && reading_buffer[i] == ']' ) 
                 {
                     // Possible string end
+                    state = POSSIBLE_LONG_BRACKET_STRING;
+                    possiblechunklevel = 0;
+                    DYNAMIC_STRING_ADD_CHAR( working_buffer, reading_buffer[i] );
+                    i++;
                 }
                 else if ( state == POSSIBLE_LONG_BRACKET_STRING_END && reading_buffer[i] == '=' ) 
                 {
                     // Possible new string end level
+                    possiblechunklevel++;
+                    DYNAMIC_STRING_ADD_CHAR( working_buffer, reading_buffer[i] );
+                    i++;
                 }
                 else if ( state == POSSIBLE_LONG_BRACKET_STRING_END && reading_buffer[i] == ']' ) 
                 {
                     // We have a new string end level. We need to check if it is the end of the string though
+                    if ( possiblechunklevel == chunklevel ) 
+                    {
+                        state = CHUNK;                        
+                    }
+                    else 
+                    {
+                        possiblechunklevel = 0;
+                    }
+                    DYNAMIC_STRING_ADD_CHAR( working_buffer, reading_buffer[i] );
+                    i++;
                 }
                 else if ( state == SINGLE_QUOTED_STRING && reading_buffer[i] == '\\' && reading_buffer[i+1] == '\'' ) 
                 {
                     // No string end 
+                    DYNAMIC_STRING_ADD_CHAR( working_buffer, reading_buffer[i] );
+                    DYNAMIC_STRING_ADD_CHAR( working_buffer, reading_buffer[i+1] );
+                    i += 2;
                 }
                 else if ( state == SINGLE_QUOTED_STRING && reading_buffer[i] == '\'' ) 
                 {
                     // Single quoted string ends here
+                    state = CHUNK;
+                    DYNAMIC_STRING_ADD_CHAR( working_buffer, reading_buffer[i] );
+                    i++;
                 }
                 else if ( state == DOUBLE_QUOTED_STRING && reading_buffer[i] == '\\' && reading_buffer[i+1] == '"' ) 
                 {
                     // No string end 
+                    DYNAMIC_STRING_ADD_CHAR( working_buffer, reading_buffer[i] );
+                    DYNAMIC_STRING_ADD_CHAR( working_buffer, reading_buffer[i+1] );
+                    i += 2;
                 }
                 else if ( state == DOUBLE_QUOTED_STRING && reading_buffer[i] == '"' ) 
                 {
                     // Double quoted string ends here
+                    state = CHUNK;
+                    DYNAMIC_STRING_ADD_CHAR( working_buffer, reading_buffer[i] );
+                    i++;
                 }
                 else
                 {
                     // Nothing special just copy
+                    DYNAMIC_STRING_ADD_CHAR( working_buffer, reading_buffer[i] );
+                    i++;
                 }
             }
+                    
+            if ( strlen( html_buffer ) != 0 )
+            {
+                int j = 0;
+                DYNAMIC_STRING_ADD( working_buffer, "io.write([" );
+                for( j = 0 ; j <= htmllevel; j++ ) 
+                {
+                    DYNAMIC_STRING_ADD( working_buffer, "=" );
+                }
+                DYNAMIC_STRING_ADD( working_buffer, "[\n" );
+                DYNAMIC_STRING_ADD( working_buffer, html_buffer );
+                DYNAMIC_STRING_ADD( working_buffer, "]" );
+                for( j = 0 ; j <= htmllevel; j++ ) 
+                {
+                    DYNAMIC_STRING_ADD( working_buffer, "=" );
+                }
+                DYNAMIC_STRING_ADD( working_buffer, "]);\n" );                    
+            }
+            free( html_buffer );
         }
         free( reading_buffer );
+        DEBUGLOG( "%s", working_buffer );
     }
 }
 
@@ -623,6 +782,12 @@ int main( int argc, char** argv )
 
     DEBUGLOG( "Converting cgi environment to superglobals" );
     init_superglobals( L );
+
+    {
+        FILE* f = fopen( argv[1], "r" );
+        size_t size;
+        lucie_reader( L, f, &size );
+    }
 
     // Load the script for execution
     DEBUGLOG( "Trying to load lua file: %s", argv[1] );
