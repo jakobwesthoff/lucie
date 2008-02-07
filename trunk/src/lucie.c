@@ -457,9 +457,23 @@ const char* lucie_reader( lua_State* L, void* data, size_t* size )
         fread( reading_buffer, sizeof( char ), filesize, (FILE*)data );
         {
             // We need to remember certain values during the processing
-            enum { HTML=1, HTML_LONG_BRACKET, CHUNK, LINE_COMMENT, POSSIBLE_COMMENT, COMMENT, POSSIBLE_COMMENT_END, LONG_BRACKET_STRING, POSSIBLE_LONG_BRACKET_STRING, POSSIBLE_LONG_BRACKET_STRING_END, SINGLE_QUOTED_STRING, DOUBLE_QUOTED_STRING, LONG_BRACKET } state = 1;
-            int htmllevel          = 1;
-            int possiblehtmllevel  = 1;
+            enum { HTML=1,
+                   HTML_LONG_BRACKET = 2,
+                   CHUNK = 3,
+                   LINE_COMMENT = 4,
+                   POSSIBLE_COMMENT = 5,
+                   COMMENT = 6,
+                   POSSIBLE_COMMENT_END = 7,
+                   LONG_BRACKET_STRING = 8,
+                   POSSIBLE_LONG_BRACKET_STRING = 9,
+                   POSSIBLE_LONG_BRACKET_STRING_END = 10,                 
+                   SINGLE_QUOTED_STRING = 11,
+                   DOUBLE_QUOTED_STRING = 12,
+                   LONG_BRACKET = 13
+            } state = 1;
+            
+            int htmllevel          = 0;
+            int possiblehtmllevel  = 0;
             int chunklevel         = 0;
             int possiblechunklevel = 0;
             char* html_buffer = NULL;
@@ -488,6 +502,7 @@ const char* lucie_reader( lua_State* L, void* data, size_t* size )
                         DYNAMIC_STRING_ADD( working_buffer, "=" );
                     }
                     DYNAMIC_STRING_ADD( working_buffer, "]);\n" );                    
+                    DYNAMIC_STRING_INIT( html_buffer );
                     i += 7;
                 }
                 else if ( state == HTML && reading_buffer[i] == ']' && reading_buffer[i+1] == '=' ) 
@@ -570,11 +585,19 @@ const char* lucie_reader( lua_State* L, void* data, size_t* size )
                     DYNAMIC_STRING_ADD_CHAR( working_buffer, reading_buffer[i] );                    
                     i++;
                 }
-                else if ( state == POSSIBLE_LONG_BRACKET_STRING && reading_buffer[i] == ']' ) 
+                else if ( state == POSSIBLE_LONG_BRACKET_STRING && reading_buffer[i] == '[' ) 
                 {
                     // We have a new string level.
                     state = LONG_BRACKET_STRING;
                     chunklevel = possiblechunklevel;
+                    DYNAMIC_STRING_ADD_CHAR( working_buffer, reading_buffer[i] );                    
+                    i++;
+                }
+                else if ( state == POSSIBLE_LONG_BRACKET_STRING ) 
+                {
+                    // We have a new string level.
+                    state = CHUNK;
+                    possiblechunklevel = 0;
                     DYNAMIC_STRING_ADD_CHAR( working_buffer, reading_buffer[i] );                    
                     i++;
                 }
@@ -661,7 +684,7 @@ const char* lucie_reader( lua_State* L, void* data, size_t* size )
                 else if ( state == LONG_BRACKET_STRING && reading_buffer[i] == ']' ) 
                 {
                     // Possible string end
-                    state = POSSIBLE_LONG_BRACKET_STRING;
+                    state = POSSIBLE_LONG_BRACKET_STRING_END;
                     possiblechunklevel = 0;
                     DYNAMIC_STRING_ADD_CHAR( working_buffer, reading_buffer[i] );
                     i++;
@@ -676,12 +699,14 @@ const char* lucie_reader( lua_State* L, void* data, size_t* size )
                 else if ( state == POSSIBLE_LONG_BRACKET_STRING_END && reading_buffer[i] == ']' ) 
                 {
                     // We have a new string end level. We need to check if it is the end of the string though
+                    DEBUGLOG( "POSSIBLE_LONG_BRACKET_STRING_END: %d == %d", possiblechunklevel, chunklevel );
                     if ( possiblechunklevel == chunklevel ) 
                     {
                         state = CHUNK;                        
                     }
                     else 
                     {
+                        state = LONG_BRACKET_STRING;
                         possiblechunklevel = 0;
                     }
                     DYNAMIC_STRING_ADD_CHAR( working_buffer, reading_buffer[i] );
@@ -721,9 +746,10 @@ const char* lucie_reader( lua_State* L, void* data, size_t* size )
                     DYNAMIC_STRING_ADD_CHAR( working_buffer, reading_buffer[i] );
                     i++;
                 }
+                DEBUGLOG( "State: %d", state );
             }
                     
-            if ( strlen( html_buffer ) != 0 )
+            if ( html_buffer != NULL )
             {
                 int j = 0;
                 DYNAMIC_STRING_ADD( working_buffer, "io.write([" );
@@ -795,7 +821,7 @@ int main( int argc, char** argv )
 
     // Execute script
     DEBUGLOG( "Executing loaded script" );
-    LUACHECK( lua_pcall( L, 0, LUA_MULTRET, 0 ) );
+//    LUACHECK( lua_pcall( L, 0, LUA_MULTRET, 0 ) );
 
     // Cleanup memory from registered extensions
     cleanup_registered_extensions();
