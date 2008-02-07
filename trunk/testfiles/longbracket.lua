@@ -16,3 +16,4 @@ Just testing brackets inside long bracket stuff ]]
 ]=====]);
 
 blub("mal sehen");
+?>
