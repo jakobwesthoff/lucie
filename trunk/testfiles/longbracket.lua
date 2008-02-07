@@ -1,4 +1,3 @@
-BEFORE
 <?lucie
 dofile("testfiles/includetest.lua");
 
@@ -11,11 +10,9 @@ new line
 io.write([=====[
 Just testing brackets inside long bracket stuff [[]]
 ]=====]);
-io.write([=====[[=====[
+io.write([=====[
 
 Just testing brackets inside long bracket stuff ]]
 ]=====]);
 
 blub("mal sehen");
-?>
-AFTER

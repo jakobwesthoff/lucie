@@ -1,16 +1,14 @@
 #!/home/jakob/dev/c/lucie/trunk/src/lucie
-print("Content-type: text/html\n\n");
+Content-type: text/html
 
-print("<html>");
-print("<head><title>Environment test</title></head>");
-print("<body>");
-print("<pre>");
-var_dump( _SERVER, _GET, _POST, _HEADER );
-print("</pre>");
-print("<form name=\"test\" action=\"envtest.lua?getval1=foobar&getval2=baz\" method=\"post\">");
-print("    <input type=\"text\" name=\"input1\" />");
-print("    <input type=\"text\" name=\"input2\" />");
-print("    <input type=\"submit\" name=\"submit\" value=\"Submit\" />");
-print("</form>");
-print("</body>");
-print("</html>");
+<html>
+	<head><title>Environment test</title></head>
+	<body>
+		<pre><?lucie var_dump( _SERVER, _GET, _POST, _HEADER ); ?></pre>
+		<form name="test" action="envtest.lua?getval1=foobar&getval2=baz" method="post">
+			<input type="text" name="input1" />
+			<input type="text" name="input2" />
+			<input type="submit" name="submit" value="Submit" />
+		</form>
+	</body>
+</html>

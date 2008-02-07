@@ -435,7 +435,9 @@ const char* lucie_reader( lua_State* L, void* data, size_t* size )
     if ( feof( (FILE*)data ) ) 
     {
         // Free the buffer and return null
+        DEBUGLOG( "END OF FILE" );
         free( output_buffer );
+        *size = 0;
         return NULL;
     }
 
@@ -454,22 +456,24 @@ const char* lucie_reader( lua_State* L, void* data, size_t* size )
         memset( reading_buffer, 0, filesize + 1 );
 
         // Read the file into memory
-        fread( reading_buffer, sizeof( char ), filesize, (FILE*)data );
+        fread( reading_buffer, sizeof( char ), filesize + 1, (FILE*)data );
         {
             // We need to remember certain values during the processing
-            enum { HTML=1,
-                   HTML_LONG_BRACKET = 2,
-                   CHUNK = 3,
-                   LINE_COMMENT = 4,
-                   POSSIBLE_COMMENT = 5,
-                   COMMENT = 6,
-                   POSSIBLE_COMMENT_END = 7,
-                   LONG_BRACKET_STRING = 8,
-                   POSSIBLE_LONG_BRACKET_STRING = 9,
-                   POSSIBLE_LONG_BRACKET_STRING_END = 10,                 
-                   SINGLE_QUOTED_STRING = 11,
-                   DOUBLE_QUOTED_STRING = 12,
-                   LONG_BRACKET = 13
+            enum { INIT = 1,
+                   SHEBANG = 2,
+                   HTML = 3,
+                   HTML_LONG_BRACKET = 4,
+                   CHUNK = 5,
+                   LINE_COMMENT = 6,
+                   POSSIBLE_COMMENT = 7,
+                   COMMENT = 8,
+                   POSSIBLE_COMMENT_END = 9,
+                   LONG_BRACKET_STRING = 10,
+                   POSSIBLE_LONG_BRACKET_STRING = 11,
+                   POSSIBLE_LONG_BRACKET_STRING_END = 12,                 
+                   SINGLE_QUOTED_STRING = 13,
+                   DOUBLE_QUOTED_STRING = 14,
+                   LONG_BRACKET = 15
             } state = 1;
             
             int htmllevel          = 0;
@@ -484,25 +488,51 @@ const char* lucie_reader( lua_State* L, void* data, size_t* size )
 
             while( i < filesize ) 
             {
-                if ( state == HTML && reading_buffer[i] == '<' && reading_buffer[i+1] == '?' && reading_buffer[i+2] == 'l' && reading_buffer[i+3] == 'u' && reading_buffer[i+4] == 'c' && reading_buffer[i+5] == 'i' && reading_buffer[i+6] == 'e' ) 
+                if ( state == INIT && reading_buffer[i] == '#' ) 
+                {
+                    state = SHEBANG;
+                } 
+                else if ( state == INIT ) 
+                {
+                    state = HTML;
+                }
+                else if ( state == SHEBANG && ( reading_buffer[i] == '\r' && reading_buffer[i+1] == '\n' ) ) 
+                {
+                    state = HTML;
+                    i += 2;
+                }
+                else if ( state == SHEBANG && ( reading_buffer[i] == '\n' ) ) 
+                {
+                    state = HTML;
+                    i++;
+                }
+                else if ( state == SHEBANG ) 
+                {
+                    i++;
+                }
+                else if ( state == HTML && reading_buffer[i] == '<' && reading_buffer[i+1] == '?' && reading_buffer[i+2] == 'l' && reading_buffer[i+3] == 'u' && reading_buffer[i+4] == 'c' && reading_buffer[i+5] == 'i' && reading_buffer[i+6] == 'e' ) 
                 {                                        
                     // Lucie starttag found
-                    int j = 0;
+                    if ( html_buffer != NULL ) 
+                    {
+                        int j = 0;
+                        DYNAMIC_STRING_ADD( working_buffer, "io.write([" );
+                        for( j = 0 ; j <= htmllevel; j++ ) 
+                        {
+                            DYNAMIC_STRING_ADD( working_buffer, "=" );
+                        }
+                        DYNAMIC_STRING_ADD( working_buffer, "[\n" );
+                        DYNAMIC_STRING_ADD( working_buffer, html_buffer );
+                        DYNAMIC_STRING_ADD( working_buffer, "]" );
+                        for( j = 0 ; j <= htmllevel; j++ ) 
+                        {
+                            DYNAMIC_STRING_ADD( working_buffer, "=" );
+                        }
+                        DYNAMIC_STRING_ADD( working_buffer, "]);\n" );                    
+                        DYNAMIC_STRING_INIT( html_buffer );
+                    }
+
                     state = CHUNK;
-                    DYNAMIC_STRING_ADD( working_buffer, "io.write([" );
-                    for( j = 0 ; j <= htmllevel; j++ ) 
-                    {
-                        DYNAMIC_STRING_ADD( working_buffer, "=" );
-                    }
-                    DYNAMIC_STRING_ADD( working_buffer, "[\n" );
-                    DYNAMIC_STRING_ADD( working_buffer, html_buffer );
-                    DYNAMIC_STRING_ADD( working_buffer, "]" );
-                    for( j = 0 ; j <= htmllevel; j++ ) 
-                    {
-                        DYNAMIC_STRING_ADD( working_buffer, "=" );
-                    }
-                    DYNAMIC_STRING_ADD( working_buffer, "]);\n" );                    
-                    DYNAMIC_STRING_INIT( html_buffer );
                     i += 7;
                 }
                 else if ( state == HTML && reading_buffer[i] == ']' && reading_buffer[i+1] == '=' ) 
@@ -560,6 +590,7 @@ const char* lucie_reader( lua_State* L, void* data, size_t* size )
                 {
                     // Line comment
                     state = LINE_COMMENT;
+                    DYNAMIC_STRING_ADD( working_buffer, "--" );
                     i += 2;
                 }
                 else if ( state == CHUNK && reading_buffer[i] == '[' && reading_buffer[i+1] == '[' ) 
@@ -768,9 +799,18 @@ const char* lucie_reader( lua_State* L, void* data, size_t* size )
             }
             free( html_buffer );
         }
-        free( reading_buffer );
-        DEBUGLOG( "%s", working_buffer );
+        free( reading_buffer );        
+        output_buffer = working_buffer;
     }
+    if ( output_buffer == NULL ) 
+    {
+        *size = 0;
+        return NULL;
+    }
+
+    *size = strlen( output_buffer );
+    DEBUGLOG( "PARSED DATA: \n%s\n-- PARSED DATA", output_buffer );
+    return output_buffer;
 }
 
 int main( int argc, char** argv )
@@ -809,19 +849,16 @@ int main( int argc, char** argv )
     DEBUGLOG( "Converting cgi environment to superglobals" );
     init_superglobals( L );
 
+    // Load the script for execution
     {
         FILE* f = fopen( argv[1], "r" );
-        size_t size;
-        lucie_reader( L, f, &size );
+        DEBUGLOG( "Trying to load lua file: %s", argv[1] );
+        LUACHECK( lua_load( L, lucie_reader, f, argv[1] ) );
     }
-
-    // Load the script for execution
-    DEBUGLOG( "Trying to load lua file: %s", argv[1] );
-    LUACHECK( luaL_loadfile( L, argv[1] ) );
 
     // Execute script
     DEBUGLOG( "Executing loaded script" );
-//    LUACHECK( lua_pcall( L, 0, LUA_MULTRET, 0 ) );
+    LUACHECK( lua_pcall( L, 0, LUA_MULTRET, 0 ) );
 
     // Cleanup memory from registered extensions
     cleanup_registered_extensions();
