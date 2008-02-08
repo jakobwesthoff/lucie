@@ -171,11 +171,11 @@ void register_extensions( lua_State* L )
 
 int main( int argc, char** argv )
 {    
-    const char* name    = "LUCIE - Lua common internet environment";
+    const char* name    = "LuCIE - Lua common internet environment";
     const char* author  = "Jakob Westhoff <jakob@westhoffswelt.de>";
     const char* version = "Version 0.1";
 
-    lua_State *L;
+    lua_State* L;
 
     // Check for commandline parameters ( We need at least the script filename
     // to execute )
@@ -210,6 +210,7 @@ int main( int argc, char** argv )
         FILE* f = fopen( argv[1], "r" );
         DEBUGLOG( "Trying to load lua file: %s", argv[1] );
         LUACHECK( lua_load( L, lucie_reader, f, argv[1] ) );
+        fclose( f );
     }
 
     // Execute script
@@ -223,5 +224,5 @@ int main( int argc, char** argv )
     DEBUGLOG( "Closing lua" );
     lua_close( L );
 
-    return 0;
+    return EXIT_SUCCESS;
 }
