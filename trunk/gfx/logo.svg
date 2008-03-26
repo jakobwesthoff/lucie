@@ -16,7 +16,10 @@
    inkscape:version="0.46"
    version="1.0"
    sodipodi:docname="logo.svg"
-   inkscape:output_extension="org.inkscape.output.svg.inkscape">
+   inkscape:output_extension="org.inkscape.output.svg.inkscape"
+   inkscape:export-filename="/home/jakob/dev/c/lucie/trunk/gfx/logo.png"
+   inkscape:export-xdpi="90"
+   inkscape:export-ydpi="90">
   <defs
      id="defs4">
     <linearGradient
@@ -195,7 +198,7 @@
      id="layer1">
     <g
        id="g6553"
-       transform="matrix(0.7358022,0,0,0.7358022,15.919159,-1.807024)">
+       transform="matrix(0.7358022,0,0,0.7358022,15.919159,0.192976)">
       <g
          transform="matrix(1.071278,0,0,1.071278,-5.861148,-8.8420325)"
          id="g5752">
@@ -323,13 +326,13 @@
        id="path4220" />
     <text
        xml:space="preserve"
-       style="font-size:34.34126282px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:URW Gothic L;-inkscape-font-specification:URW Gothic L"
+       style="font-size:34.34126282px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;fill:#2e3436;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:URW Gothic L;-inkscape-font-specification:URW Gothic L"
        x="18.588814"
-       y="120.78697"
+       y="122.78697"
        id="text6574"><tspan
          sodipodi:role="line"
          id="tspan6576"
          x="18.588814"
-         y="120.78697">Lucie</tspan></text>
+         y="122.78697">Lucie</tspan></text>
   </g>
 </svg>
