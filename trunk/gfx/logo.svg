@@ -90,17 +90,6 @@
          stdDeviation="4.1598248"
          id="feGaussianBlur5954" />
     </filter>
-    <radialGradient
-       inkscape:collect="always"
-       xlink:href="#linearGradient5967"
-       id="radialGradient5973"
-       cx="110"
-       cy="22.25"
-       fx="110"
-       fy="22.25"
-       r="12.25"
-       gradientUnits="userSpaceOnUse"
-       gradientTransform="matrix(1.6960583,-0.9792199,0.5605681,0.9709323,-89.039063,108.36095)" />
     <linearGradient
        id="linearGradient3962">
       <stop
@@ -138,37 +127,6 @@
        inkscape:vp_y="0 : 1000 : 0"
        inkscape:vp_x="0 : 24 : 1"
        sodipodi:type="inkscape:persp3d" />
-    <radialGradient
-       inkscape:collect="always"
-       xlink:href="#linearGradient5758"
-       id="radialGradient6541"
-       gradientUnits="userSpaceOnUse"
-       gradientTransform="matrix(1.3928113,-0.80414,0.4858968,0.8415981,-37.213351,47.483516)"
-       cx="52.289364"
-       cy="34.314896"
-       fx="52.289364"
-       fy="34.314896"
-       r="49.565956" />
-    <linearGradient
-       inkscape:collect="always"
-       xlink:href="#linearGradient5908"
-       id="linearGradient6543"
-       gradientUnits="userSpaceOnUse"
-       x1="63.727661"
-       y1="118.33192"
-       x2="63.727661"
-       y2="68.048958" />
-    <radialGradient
-       inkscape:collect="always"
-       xlink:href="#linearGradient5758"
-       id="radialGradient6551"
-       gradientUnits="userSpaceOnUse"
-       gradientTransform="matrix(1.3928113,-0.80414,0.4858968,0.8415981,-37.213351,47.483516)"
-       cx="52.289364"
-       cy="34.314896"
-       fx="52.289364"
-       fy="34.314896"
-       r="49.565956" />
     <radialGradient
        inkscape:collect="always"
        xlink:href="#linearGradient5967"
@@ -217,7 +175,9 @@
      inkscape:window-width="1920"
      inkscape:window-height="1118"
      inkscape:window-x="1920"
-     inkscape:window-y="24" />
+     inkscape:window-y="24"
+     inkscape:showpageshadow="true"
+     showborder="true" />
   <metadata
      id="metadata7">
     <rdf:RDF>
@@ -235,7 +195,7 @@
      id="layer1">
     <g
        id="g6553"
-       transform="matrix(0.7358022,0,0,0.7358022,15.919159,4.192976)">
+       transform="matrix(0.7358022,0,0,0.7358022,15.919159,-1.807024)">
       <g
          transform="matrix(1.071278,0,0,1.071278,-5.861148,-8.8420325)"
          id="g5752">
@@ -364,12 +324,12 @@
     <text
        xml:space="preserve"
        style="font-size:34.34126282px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:URW Gothic L;-inkscape-font-specification:URW Gothic L"
-       x="17.588814"
-       y="123.78697"
+       x="18.588814"
+       y="120.78697"
        id="text6574"><tspan
          sodipodi:role="line"
          id="tspan6576"
-         x="17.588814"
-         y="123.78697">Lucie</tspan></text>
+         x="18.588814"
+         y="120.78697">Lucie</tspan></text>
   </g>
 </svg>
