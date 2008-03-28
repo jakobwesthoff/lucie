@@ -161,6 +161,20 @@
        y1="118.33192"
        x2="63.727661"
        y2="68.048958" />
+    <mask
+       maskUnits="userSpaceOnUse"
+       id="mask3237">
+      <path
+         sodipodi:type="arc"
+         style="fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+         id="path3239"
+         sodipodi:cx="62.638298"
+         sodipodi:cy="61.821278"
+         sodipodi:rx="49.565956"
+         sodipodi:ry="49.565956"
+         d="M 112.20425,61.821278 A 49.565956,49.565956 0 1 1 13.072342,61.821278 A 49.565956,49.565956 0 1 1 112.20425,61.821278 z"
+         transform="matrix(0.9452594,0.2174119,-0.2174119,0.9452594,16.194727,-6.614203)" />
+    </mask>
   </defs>
   <sodipodi:namedview
      id="base"
@@ -173,7 +187,7 @@
      inkscape:cx="64"
      inkscape:cy="64"
      inkscape:document-units="px"
-     inkscape:current-layer="layer1"
+     inkscape:current-layer="g6524"
      showgrid="false"
      inkscape:window-width="1920"
      inkscape:window-height="1118"
@@ -285,7 +299,8 @@
            sodipodi:cx="63.114895"
            id="path5906"
            style="opacity:0.5;fill:url(#linearGradient6582);fill-opacity:1;stroke:none;stroke-width:1;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;filter:url(#filter5952)"
-           sodipodi:type="arc" />
+           sodipodi:type="arc"
+           mask="url(#mask3237)" />
         <path
            sodipodi:type="arc"
            style="fill:none;fill-opacity:1;stroke:#ce5c00;stroke-width:1;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
