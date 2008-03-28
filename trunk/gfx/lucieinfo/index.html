@@ -28,15 +28,22 @@
             margin-top: 20px;
         }
         
-        h1 {
-            color: #2e3436;
-            border: 1px solid #2d1300;
-            background: #fcaf3e url('lucie.png') right center no-repeat;
+        table.title {
             margin-bottom: 20px;
             margin-top: 20px;
+        }
+
+        table.title td {
+            border-right: 0;
             padding: 10px;
-            width: 580px;
-            min-height: 90px;
+            font-size: 24px;
+            height: 100px;
+        }
+
+        table.title td.logo {
+            border: 0;
+            background: #fcaf3e url('lucie.png') left center no-repeat;
+            width: 80px;
         }
         
         table {
@@ -73,7 +80,14 @@
 	<title>Lucie information page</title>
 </head>
 <body>
-	<h1>Lucie Version 0.0.1</h1>
+    <table class="title">
+        <thead>
+            <tr>
+                <td>Lucie Version 0.0.1</td>
+                <td class="logo"></td>
+            </tr>
+        </thead>
+    </table>
 	<table>
 		<tr>
 			<td class="key">Build Date</td>
