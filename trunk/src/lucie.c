@@ -7,14 +7,16 @@
 #include "inireader.h"
 #include "reader.h"
 #include "superglobals.h"
+#include "lucieinfo.h"
 #include "util.h"
 
+
+const char* config_file = NULL;
 
 int extension_count;
 extension_t **extensions;
 
 char errorstring[4096];
-
 
 void cleanup_registered_extensions()
 {
@@ -38,7 +40,6 @@ void register_extensions( lua_State* L )
     inireader_entry_t* current = NULL;
     
     const char* lucie_config_path_env = NULL;
-    const char* config_file           = NULL;
 
     // Harcoded configpaths to check
     const char* hardcoded_path[] = {
@@ -133,17 +134,13 @@ void register_extensions( lua_State* L )
 
 int main( int argc, char** argv )
 {    
-    const char* name    = "LuCIE - Lua common internet environment";
-    const char* author  = "Jakob Westhoff <jakob@westhoffswelt.de>";
-    const char* version = "Version 0.1";
-
     lua_State* L;
 
     // Check for commandline parameters ( We need at least the script filename
     // to execute )
     if ( argc < 2 ) 
     {
-        printf( "%s %s\nCopyright %s\n", name, version, author );
+        printf( "%s - %s Version %s\nCopyright %s\n", APPLICATION_NAME, APPLICATION_FULLNAME, APPLICATION_VERSION, APPLICATION_AUTHOR );
         printf( "\nUsage: %s <lucie scriptfile>\n", basename( argv[0] ) );
         printf( "\nInformation:\n" );
         printf( "    This interpreter should be called as a cgi executable from\n    inside the webserver.\n" );
@@ -166,6 +163,10 @@ int main( int argc, char** argv )
 
     DEBUGLOG( "Converting cgi environment to superglobals" );
     init_superglobals( L );
+
+    DEBUGLOG( "Registering lucieinfo function" );
+    lua_pushcfunction( L, L_lucieinfo );               
+    lua_setglobal( L, "lucieinfo" );
 
     // Load the script for execution
     {

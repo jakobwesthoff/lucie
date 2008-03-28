@@ -8,12 +8,19 @@
 #include <lauxlib.h>
 #include <lualib.h>
 
+#define APPLICATION_NAME "LuCIE"
+#define APPLICATION_FULLNAME "Lua common internet environment"
+#define APPLICATION_AUTHOR "Jakob Westhoff <jakob@westhoffswelt.de>"
+#define APPLICATION_VERSION "0.0.1"
+
 typedef struct 
     {
         char* name;
         char* author;
         char* email;        
     } extension_t;
+
+extern const char* config_file;
 
 extern int extension_count;
 extern extension_t **extensions;
