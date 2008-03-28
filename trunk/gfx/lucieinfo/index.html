@@ -1,0 +1,165 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+	<meta name="language" content="en" />
+	<meta name="description" content="Lucie information page" />
+	<meta name="author" content="Jakob Westhoff" />
+	
+	<style>
+        body {
+            margin: 0;
+            font-family: verdana, sans-serif;        
+            font-size: 14px;
+            width: 100%;
+        }
+
+        
+        h1, h2, h3, table {
+            margin: 0 auto;
+            width: 600px;
+        }
+
+        h2, h3 {
+            text-align: center;
+            margin-bottom: 10px;
+            margin-top: 20px;
+        }
+        
+        h1 {
+            color: #2e3436;
+            border: 1px solid #2d1300;
+            background: #fcaf3e url('lucie.png') right center no-repeat;
+            margin-bottom: 20px;
+            margin-top: 20px;
+            padding: 10px;
+            width: 580px;
+            min-height: 90px;
+        }
+        
+        table {
+            border-collapse: collapse;
+            margin-bottom: 10px;
+        }        
+
+        table, td {
+            border: 1px solid #2d1300;            
+            background: #eeeeec;
+        }
+
+        td {
+            padding: 2px 3px 2px 5px;
+        }
+        
+        thead td {
+            font-weight: bold;
+            background: #fcaf3e;
+        }
+        
+
+        td.key {
+            font-weight: bold;
+            background: #fed69c;
+        }
+
+        td.value {
+            background: #eeeeec;
+        }
+		
+	</style>
+
+	<title>Lucie information page</title>
+</head>
+<body>
+	<h1>Lucie Version 0.0.1</h1>
+	<table>
+		<tr>
+			<td class="key">Build Date</td>
+			<td class="value">Mar 28 2008 12:58:52</td>
+		</tr>
+		<tr>
+			<td class="key">Configuration File</td>
+			<td class="value">/etc/lucie.conf</td>
+		</tr>
+		<tr>
+			<td class="key">Debug Build</td>
+			<td class="value">yes</td>
+		</tr>
+	</table>
+
+	<h2>Loaded Modules</h2>
+
+	<h3>Core</h3>		
+	<table>		
+		<thead>
+			<tr>
+				<td colspan="2">Author information</td>
+			</tr>
+		</thead>
+		<tr>
+			<td class="key">Name</td>
+			<td class="value">Jakob Westhoff</td>
+		</tr>
+		<tr>
+			<td class="key">EMail</td>
+			<td class="value">jakob@westhoffswelt.de</td>
+		</tr>
+	</table>
+	<table>		
+		<thead>
+			<tr>
+				<td>Registered Functions</td>
+			</tr>
+		</thead>
+		<tr>
+			<td class="value">var_dump</td>
+		</tr>
+		<tr>
+			<td class="value">urldecode</td>
+		</tr>
+		<tr>
+			<td class="value">readini</td>
+		</tr>
+	</table>
+
+    <h2>Environment Variables</h2>
+    <table>
+        <thead>
+            <tr>
+                <td>Variable Name</td>
+                <td>Value</td>
+            </tr>
+        </thead>
+        <tr>
+            <td class="key">Foo</td>
+            <td class="value">bar</td>
+        </tr>
+        <tr>
+            <td class="key">Blub</td>
+            <td class="value">Blab</td>
+        </tr>
+    </table>
+
+    <h2>Superglobals</h2>
+    <table>
+        <thead>
+            <tr>
+                <td>Variable Name</td>
+                <td>Value</td>
+            </tr>
+        </thead>
+        <tr>
+            <td class="key">Foo</td>
+            <td class="value">bar</td>
+        </tr>
+        <tr>
+            <td class="key">Blub</td>
+            <td class="value">Blab</td>
+        </tr>
+    </table>
+
+</body>
+</html>
+
