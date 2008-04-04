@@ -140,7 +140,7 @@ const char* lucie_reader( lua_State* L, void* data, size_t* size )
                     if ( html_buffer != NULL ) 
                     {
                         int j = 0;
-                        dynamic_string_add( &working_buffer, "io.write([" );
+                        dynamic_string_add( &working_buffer, "io.stdout:write([" );
                         for( j = 0 ; j <= htmllevel; j++ ) 
                         {
                             dynamic_string_add( &working_buffer, "=" );
