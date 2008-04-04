@@ -4,7 +4,7 @@ MAKE= /usr/bin/make
 
 CFLAGS= -Os -DDEBUG
 
-LUA_DIR= lib/lua-5.1.2
+LUA_DIR= lib/lua-5.1.3
 LUA_A= $(LUA_DIR)/src/liblua.a
 LUA_INCLUDE= $(LUA_DIR)/src
 LUA_LIB= $(LUA_DIR)/src
