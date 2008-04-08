@@ -1,10 +1,11 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 
 #include "lucie.h"
 #include "lucieinfo.h"
 
-int L_lucieinfo( lua_State* L ) 
+void lucieinfo_header() 
 {
     //
     // Html header and stylesheet
@@ -94,77 +95,112 @@ int L_lucieinfo( lua_State* L )
 <body> \n \
      \n \
    " );
+}
+
+void lucieinfo_footer() 
+{
+    printf( " \
+</body> \n \
+</html> \n \
+    " );
+}
+
+void lucieinfo_table_begin( char* class ) 
+{
+    printf( "<table class=\"%s\">\n", class );
+}
+
+void lucieinfo_table_end() 
+{
+    printf( "</table>\n" );
+}
+
+void lucieinfo_table_header( int cols, ... ) 
+{
+    va_list va;
+    int i; 
+
+    printf( "<thead><tr>\n" );
+
+    va_start( va, cols );
+    for( i = 0; i < cols * 2; i++ ) 
+    {
+        char* col_class = va_arg( va, char* );
+        char* col_data = va_arg( va, char* );
+        printf( "<td class=\"%s\">%s</td>\n", col_class, col_data );
+    }
+    printf( "</tr></thead>\n" );
+}
+
+void lucieinfo_table_row( int cols, ... ) 
+{
+    va_list va;
+    int i; 
     
+    printf( "<tr>\n" );
+    va_start( va, cols );
+    for( i = 0; i < cols * 2; i++ ) 
+    {
+        char* col_class = va_arg( va, char* );
+        char* col_data = va_arg( va, char* );
+        printf( "<td class=\"%s\">%s</td>\n", col_class, col_data );
+    }
+    printf( "</tr>\n" );
+}
+
+void lucieinfo_headline( int type, char* headline ) 
+{
+    printf( "<h%i>%s</h%i>\n", type, headline, type );
+}
+
+
+int L_lucieinfo( lua_State* L ) 
+{
+    lucieinfo_header();
+
     //
     // Title and Version number
     //
-    printf( " \
-        <table class=\"title\"> \n \
-            <thead> \n \
-                <tr> \n \
-                    <td>" APPLICATION_NAME " Version " APPLICATION_VERSION "</td> \n \
-                    <td class=\"logo\"></td> \n \
-                </tr> \n \
-            </thead> \n \
-        </table> \n \
-    " );
+    lucieinfo_table_begin( "title" );
+    lucieinfo_table_header( 2, "", APPLICATION_NAME " Version " APPLICATION_VERSION, "logo", "" );
+    lucieinfo_table_end();
 
     // 
     // Default information
     //
-    printf( " \
-        <table> \n \
-            <tr> \n \
-                <td class=\"key\">Build Date</td> \n \
-                <td class=\"value\">" __DATE__ " " __TIME__ "</td> \n \
-            </tr> \n \
-            <tr> \n \
-                <td class=\"key\">Configuration File</td> \n \
-                <td class=\"value\">\
-" );
-    printf( config_file );
-    printf( "</td> \n \
-            </tr> \n \
-            <tr> \n \
-                <td class=\"key\">Debug Build</td> \n \
-                <td class=\"value\">\
-" );
+    lucieinfo_table_begin( "" );
+    lucieinfo_table_row( 2, "key", "Build Date", "value", __DATE__ " " __TIME__ );
+    lucieinfo_table_row( 2, "key", "Configuration File", "value", config_file );
     #ifdef DEBUG
-        printf( "yes" );
+        lucieinfo_table_row( 2, "key", "Debug Build", "value", "yes" );
     #else
-        printf( "no" );
+        lucieinfo_table_row( 2, "key", "Debug Build", "value", "no" );
     #endif
-    printf( "</td> \n \
-            </tr> \n \
-        </table> \n \
-    " );
+    lucieinfo_table_end();
 
     //
     // Loaded module info
     //
-    printf( "<h2>Loaded Modules</h2>\n" );
+    lucieinfo_headline( 2, "Loaded Modules" );
     {
         int i;
         for( i=0; i<extension_count; i++ ) 
         {
+            lucieinfo_headline( 3, extensions[i]->name );
+            lucieinfo_table_begin( "" );
+            
+            // Header with colspan=2
             printf( "\
-                <h3>%s</h3>		 \n \
-                <table>		 \n \
                     <thead> \n \
                         <tr> \n \
                             <td colspan=\"2\">Author information</td> \n \
                         </tr> \n \
-                    </thead> \n \
-                    <tr> \n \
-                        <td class=\"key\">Name</td> \n \
-                        <td class=\"value\">%s</td> \n \
-                    </tr> \n \
-                    <tr> \n \
-                        <td class=\"key\">EMail</td> \n \
-                        <td class=\"value\">%s</td> \n \
-                    </tr> \n \
-                </table> \n \
-            ", extensions[i]->name, extensions[i]->author, extensions[i]->email );
+                    </thead> \n"
+            );
+            
+            lucieinfo_table_row( 2, "key", "Name", "value", extensions[i]->author );
+            lucieinfo_table_row( 2, "key", "EMail", "value", extensions[i]->email );
+            lucieinfo_table_end();
         }
     }
 
@@ -172,16 +208,9 @@ int L_lucieinfo( lua_State* L )
     //
     // Environmental variables
     //
-    printf( "<h2>Environment Variables</h2>\n" );
-    printf( "\
-        <table> \n \
-            <thead> \n \
-                <tr> \n \
-                    <td>Variable Name</td> \n \
-                    <td>Value</td> \n \
-                </tr> \n \
-            </thead> \n \
-    " );
+    lucieinfo_headline( 2, "Environment Variables" );
+    lucieinfo_table_begin( "" );
+    lucieinfo_table_header( 2, "", "Variable Name", "", "Value" );
     {
         extern char** environ;
         char** env;
@@ -203,25 +232,18 @@ int L_lucieinfo( lua_State* L )
             }
 
             // @todo: There should be a html entities encode be done here
-            printf( "<tr><td class=\"key\">%s</td><td class=\"value\">%s</td>\n", key, value );
+            lucieinfo_table_row( 2, "key", key, "value", value );
             free( key );
         }    
     }
-    printf( "</table>\n" );
+    lucieinfo_table_end();
 
     //
     // Superglobal variables
     //
-    printf( "<h2>Superglobals</h2>\n" );
-    printf( "\
-        <table> \n \
-            <thead> \n \
-                <tr> \n \
-                    <td>Variable Name</td> \n \
-                    <td>Value</td> \n \
-                </tr> \n \
-            </thead> \n \
-    " );
+    lucieinfo_headline( 2, "Superglobals" );
+    lucieinfo_table_begin( "" );
+    lucieinfo_table_header( 2, "", "Variable Name", "", "Value" );
     // _SERVER superglobal
     {
         lua_getglobal( L, "_SERVER" );
@@ -270,16 +292,7 @@ int L_lucieinfo( lua_State* L )
         }
         lua_pop( L, 1 );
     }
-    printf( "</table>\n" );
-
-
-    //
-    // Html footer
-    //
-    printf( " \
-</body> \n \
-</html> \n \
-    " );
+    lucieinfo_table_end();
 
     return 0;
 
