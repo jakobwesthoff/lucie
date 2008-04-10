@@ -123,7 +123,7 @@ void lucieinfo_table_header( int cols, ... )
     printf( "<thead><tr>\n" );
 
     va_start( va, cols );
-    for( i = 0; i < cols * 2; i++ ) 
+    for( i = 0; i < cols; i++ ) 
     {
         char* col_class = va_arg( va, char* );
         char* col_data = va_arg( va, char* );
@@ -139,7 +139,7 @@ void lucieinfo_table_row( int cols, ... )
     
     printf( "<tr>\n" );
     va_start( va, cols );
-    for( i = 0; i < cols * 2; i++ ) 
+    for( i = 0; i < cols; i++ ) 
     {
         char* col_class = va_arg( va, char* );
         char* col_data = va_arg( va, char* );
