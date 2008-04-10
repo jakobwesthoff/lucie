@@ -20,12 +20,18 @@ char errorstring[4096];
 
 void cleanup_registered_extensions()
 {
-    int i;
+    int i,j;
 
     DEBUGLOG( "Freeing memory of %i extensions.", extension_count );
     for( i = 0; i < extension_count; i++ )
     {
         DEBUGLOG( "Freeing extension %i.", i );
+        for( j=0; j<extensions[i]->function_count; j++ ) 
+        {
+            DEBUGLOG( "Freeing function name %i.", j );
+            free( extensions[i]->functions[j] );
+        }
+        free( extensions[i]->functions );
         free( extensions[i] );
     }
     DEBUGLOG( "Freeing extension array." );

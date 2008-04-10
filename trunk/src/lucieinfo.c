@@ -183,9 +183,9 @@ int L_lucieinfo( lua_State* L )
     //
     lucieinfo_headline( 2, "Loaded Modules" );
     {
-        int i;
+        int i,j;
         for( i=0; i<extension_count; i++ ) 
-        {
+        {           
             lucieinfo_headline( 3, extensions[i]->name );
             lucieinfo_table_begin( "" );
             
@@ -200,6 +200,14 @@ int L_lucieinfo( lua_State* L )
             
             lucieinfo_table_row( 2, "key", "Name", "value", extensions[i]->author );
             lucieinfo_table_row( 2, "key", "EMail", "value", extensions[i]->email );
+            lucieinfo_table_end();
+
+            lucieinfo_table_begin( "" );
+            lucieinfo_table_header( 1, "", "Registered functions" );
+            for( j=0; j<extensions[i]->function_count; j++ ) 
+            {
+                lucieinfo_table_row( 1, "value", extensions[i]->functions[j] );
+            }
             lucieinfo_table_end();
         }
     }

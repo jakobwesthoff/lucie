@@ -18,6 +18,8 @@ typedef struct
         char* name;
         char* author;
         char* email;        
+        char** functions;
+        int function_count;
     } extension_t;
 
 extern const char* config_file;
@@ -88,7 +90,9 @@ extern int file_exists( const char* filename );
         {                                                                                                               \
             extensions = ( extension_t** ) srealloc( extensions, ( extension_count + 4 ) * sizeof( extension_t* ) );    \
         }                                                                                                               \
-        extensions[extension_count] = ( extension_t* ) smalloc( sizeof( extension_t ) );                                 \
+        extensions[extension_count] = ( extension_t* ) smalloc( sizeof( extension_t ) );                                \
+        extensions[extension_count]->functions = ( char** ) smalloc( sizeof( char* ) );                                 \
+        extensions[extension_count]->function_count = 0;                                                                \
         extensions[extension_count]->name = nameVal;                                                                    \
         extensions[extension_count]->author = authorVal;                                                                \
         extensions[extension_count++]->email = emailVal;                                                                \
@@ -105,11 +109,20 @@ extern int file_exists( const char* filename );
 
 
 #define REGISTER_NAMESPACE_FUNCTION(func, luafunc)  \
-    lua_pushstring( L, #luafunc );                  \
-    lua_pushcfunction( L, func );                   \
-    lua_settable( L, -3 );              
+    { \
+        char* tmp = smalloc( sizeof( char ) * ( strlen( #luafunc ) + strlen( namespace ) + 2 ) ); \
+        memset( tmp, 0,  sizeof( char ) * ( strlen( #luafunc ) + strlen( namespace ) + 2 ) ); \
+        sprintf( tmp, "%s.%s", namespace, #luafunc ); \
+        extensions[extension_count - 1]->functions = ( char** ) srealloc( extensions[extension_count - 1]->functions, ( extensions[extension_count - 1]->function_count + 1 ) * sizeof( char* ) );     \
+        extensions[extension_count - 1]->functions[extensions[extension_count - 1]->function_count++] = tmp;                                                                     \
+        lua_pushstring( L, #luafunc );                                                                                                                                           \
+        lua_pushcfunction( L, func );                                                                                                                                            \
+        lua_settable( L, -3 );                                                                                                                                                   \
+    }
 
 #define REGISTER_GLOBAL_FUNCTION(func, luafunc) \
+    extensions[extension_count - 1]->functions = ( char** ) srealloc( extensions[extension_count - 1]->functions, ( extensions[extension_count - 1]->function_count + 1 ) * sizeof( char* ) );     \
+    extensions[extension_count - 1]->functions[extensions[extension_count - 1]->function_count++] = strdup( #luafunc );                                                                \
     lua_pushcfunction( L, func );               \
     lua_setglobal( L, #luafunc );
 
