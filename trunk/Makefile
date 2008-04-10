@@ -13,11 +13,11 @@ LUCIE_C= src/lucie.c src/inireader.c src/btree.c src/reader.c src/superglobals.c
 LUCIE_H= src/lucie.h src/inireader.h src/btree.h src/reader.h src/superglobals.h src/util.h src/lucieinfo.h
 LUCIE= src/lucie
 
-EXTENSIONS= src/ext/core.so
+EXTENSIONS= src/ext/core.so src/ext/fs.so
 
 .PHONY: all clean
 
-all: $(LUCIE) $(EXT_CORE)
+all: $(LUCIE) 
 
 clean:
 	cd "$(LUA_DIR)" && $(MAKE) clean
