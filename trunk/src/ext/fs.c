@@ -103,10 +103,10 @@ int stat_file( lua_State *L, enum statquestion question )
             RETURN_INTEGER( buffer.st_ctime );
         break;
         case QUESTION_OWNER:
-            RETURN_INTEGER( uid );
+            RETURN_INTEGER( buffer.st_uid );
         break;
         case QUESTION_GROUP:
-            RETURN_INTEGER( gid );
+            RETURN_INTEGER( buffer.st_gid );
         break;
         case QUESTION_SIZE:
             RETURN_INTEGER( buffer.st_size );
