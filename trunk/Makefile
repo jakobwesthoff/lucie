@@ -15,7 +15,7 @@ LUCIE= src/lucie
 
 EXTENSIONS= src/ext/core.so src/ext/fs.so
 
-.PHONY: all clean
+.PHONY: all clean tests
 
 all: $(LUCIE) 
 
@@ -23,6 +23,9 @@ clean:
 	cd "$(LUA_DIR)" && $(MAKE) clean
 	rm -f $(LUCIE) $(EXTENSIONS)
 	
+tests: $(LUCIE)
+	util/runTests.sh
+
 $(LUA_A):
 	cd "$(LUA_DIR)/src" && $(MAKE) a MYCFLAGS="-DLUA_USE_LINUX $(CFLAGS)" MYLIBS="-Wl,-E -ldl"
 
