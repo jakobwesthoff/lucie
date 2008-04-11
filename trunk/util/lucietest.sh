@@ -57,3 +57,4 @@ if [ $? -ne 0 ]; then
 	exitWithErrorCode 4
 fi
 
+exitWithErrorCode 0
