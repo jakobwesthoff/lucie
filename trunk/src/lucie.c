@@ -9,6 +9,7 @@
 #include "superglobals.h"
 #include "lucieinfo.h"
 #include "util.h"
+#include "output.h"
 
 
 const char* config_file = NULL;
@@ -173,6 +174,9 @@ int main( int argc, char** argv )
     DEBUGLOG( "Registering lucieinfo function" );
     lua_pushcfunction( L, L_lucieinfo );               
     lua_setglobal( L, "lucieinfo" );
+
+    DEBUGLOG( "Installing output overrides" );
+    init_output_override( L );
 
     // Load the script for execution
     {
