@@ -1,0 +1,10 @@
+#!/bin/lucie
+before block
+<?lucie
+	io.write("in block");
+?>
+after block
+---lucietest-output---
+before block
+in block
+after block

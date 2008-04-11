@@ -1,0 +1,37 @@
+<?lucie
+	filename = "tests/fs.data";
+	var_dump(
+		file.exists( filename ),
+		file.is_file( filename ),
+		file.is_dir( filename ),
+		file.is_link( filename ),
+		file.is_readable( filename ),
+		file.is_writable( filename ),
+		file.is_executable( filename ),
+		file.mtime( filename ),
+		file.atime( filename ),
+		file.ctime( filename ),
+		file.owner( filename ),
+		file.group( filename ),
+		file.size( filename ),
+		file.basename( filename ),
+		file.dirname( filename )
+	);
+?>
+---lucietest-output---
+boolean(true)
+boolean(true)
+boolean(false)
+boolean(false)
+boolean(true)
+boolean(true)
+boolean(false)
+integer(1207948216)
+integer(1207948216)
+integer(1207948216)
+integer(1000)
+integer(100)
+integer(7)
+string(7) "fs.data"
+string(5) "tests"
+
