@@ -5,6 +5,8 @@ before block
 ?>
 after block
 ---lucietest-output---
+Content-Type: text/html
+
 before block
 in block
 after block

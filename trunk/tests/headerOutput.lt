@@ -1,0 +1,8 @@
+<?lucie
+	header("Content-Language", "de");
+?>
+---lucietest-output---
+Content-Type: text/html
+Content-Language: de
+
+

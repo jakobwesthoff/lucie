@@ -1,0 +1,7 @@
+<?lucie
+	header("Content-Type", "text/plain");
+?>
+---lucietest-output---
+Content-Type: text/plain
+
+

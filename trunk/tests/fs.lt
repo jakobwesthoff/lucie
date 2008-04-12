@@ -19,6 +19,8 @@
 	);
 ?>
 ---lucietest-output---
+Content-Type: text/html
+
 boolean(true)
 boolean(true)
 boolean(false)
