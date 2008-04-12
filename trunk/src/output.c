@@ -187,6 +187,12 @@ int L_header( lua_State *L )
     const char* key   = luaL_checkstring( L, 1 );
     const char* value = luaL_checkstring( L, 2 );
 
+    if ( headersent ) 
+    {
+        luaL_error( L, "Headers need to be sent before any other output." );
+        return 0;
+    }
+
     for( cur = httpheader; cur; before = cur, cur = cur->next ) 
     {
         if ( !strcmp( cur->key, key ) ) 
