@@ -44,7 +44,7 @@ echo "" >>testlog.log
 src/lucie "${INPUT}" 1>${GENERATED_OUTPUT} 2>>testlog.log
 
 if [ $? -ne 0 ]; then
-	echo "Error lucie exitWithErrorCodeed with non zero error code:"
+	echo "Error lucie exited with non zero error code:"
 	echo "  executed testcase: ${1}"
 	exitWithErrorCode 3
 fi
