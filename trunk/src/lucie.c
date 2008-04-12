@@ -190,6 +190,12 @@ int main( int argc, char** argv )
     DEBUGLOG( "Executing loaded script" );
     LUACHECK( lua_pcall( L, 0, LUA_MULTRET, 0 ) );
 
+    // At least output the default header
+    header_output();
+
+    // Cleanup header data
+    cleanup_headerdata();
+
     // Cleanup memory from registered extensions
     cleanup_registered_extensions();
 

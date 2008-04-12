@@ -3,6 +3,7 @@
 #include <unistd.h>
 
 #include "lucie.h"
+#include "output.h"
 #include "lucieinfo.h"
 
 void lucieinfo_header() 
@@ -156,6 +157,8 @@ void lucieinfo_headline( int type, char* headline )
 
 int L_lucieinfo( lua_State* L ) 
 {
+    header_output();
+
     lucieinfo_header();
 
     //

@@ -1,8 +1,24 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "lucie.h"
 #include "output.h"
+
+struct httpheader 
+{
+    char* key;
+    char* value;
+    struct httpheader* next;
+};
+
+struct httpheader* httpheader;
+int headersent;
+
+int L_f_write( lua_State *L );
+int L_io_write( lua_State *L );
+int L_print( lua_State *L );
+int L_header( lua_State *L );
 
 //
 // This part has been copied from the lua 5.1.3 source code
@@ -13,6 +29,11 @@
 #define tofilep(L)	((FILE **)luaL_checkudata(L, 1, LUA_FILEHANDLE))
 
 static const char *const fnames[] = {"input", "output"};
+static int pushresult (lua_State *L, int i, const char *filename);
+static FILE *tofile (lua_State *L);
+static FILE *getiofile (lua_State *L, int findex);
+static int g_write (lua_State *L, FILE *f, int arg);
+static int luaB_print (lua_State *L);
 
 static int pushresult (lua_State *L, int i, const char *filename) {
   int en = errno;  /* calls to Lua API may change this value */
@@ -115,6 +136,17 @@ void init_output_override( lua_State *L )
     DEBUGLOG( "Installing print override" );
     lua_pushcfunction( L, L_print );
     lua_setglobal( L, "print" );
+
+    // Init the httpheader struct with a default content-type
+    httpheader = ( struct httpheader* )smalloc( sizeof( struct httpheader ) );
+    headersent = false;
+    httpheader->key = strdup( "Content-Type" );
+    httpheader->value = strdup( "text/html" );
+    httpheader->next = NULL;
+
+    // Register the header function
+    lua_pushcfunction( L, L_header );
+    lua_setglobal( L, "header" );
 }
 
 int L_f_write( lua_State *L ) 
@@ -122,7 +154,7 @@ int L_f_write( lua_State *L )
     FILE* f = tofile( L );
     if ( f == stdout ) 
     {
-        //@todo: Handle the output   
+        header_output();   
     }
     // Let lua handle the output procedure
     return g_write( L, f, 2 ); 
@@ -133,13 +165,79 @@ int L_io_write( lua_State *L )
     FILE* f = getiofile( L, IO_OUTPUT );
     if ( f == stdout ) 
     {
-        //@todo: Handle the output   
+        header_output();   
     }
     return g_write( L, f, 1 );
 }
 
 int L_print( lua_State *L ) 
 {
-    //@todo: Handle the output   
+    header_output();   
     return luaB_print( L );
 }
+
+//
+// Handle the header output and cleanup
+//
+
+int L_header( lua_State *L ) 
+{
+    struct httpheader* cur;
+    struct httpheader* before = NULL;
+    const char* key   = luaL_checkstring( L, 1 );
+    const char* value = luaL_checkstring( L, 2 );
+
+    for( cur = httpheader; cur; before = cur, cur = cur->next ) 
+    {
+        if ( !strcmp( cur->key, key ) ) 
+        {
+            // We already have a header with this key just update its value
+            free( cur->value );
+            cur->value = strdup( value );
+            return 0;
+        }
+    }
+    
+    // Add the new header to the end of the linked list
+    before->next = ( struct httpheader* )smalloc( sizeof( struct httpheader ) );
+    cur = before->next;
+    cur->key = strdup( key );
+    cur->value = strdup( value );
+    cur->next = NULL;
+
+    return 0;
+}
+
+void cleanup_headerdata() 
+{
+    struct httpheader* cur = httpheader;   
+    while ( cur )
+    {
+        DEBUGLOG( "Freeing header entry: %s: %s", cur->key, cur->value );
+        // store the next item pointer before freeing the current one
+        struct httpheader* tmp = cur->next;
+        free( cur->key );
+        free( cur->value );
+        free( cur );
+        cur = tmp;
+    }
+}
+
+void header_output()
+{
+    struct httpheader* cur;
+
+    if ( headersent == true ) 
+    {
+        return;
+    }
+
+    for( cur = httpheader; cur; cur = cur->next ) 
+    {
+        printf( "%s: %s\n", cur->key, cur->value );
+    }
+    printf( "\n" );
+    
+    headersent = true;    
+}
+

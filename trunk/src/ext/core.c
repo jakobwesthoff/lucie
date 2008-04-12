@@ -9,6 +9,7 @@
 #include "../lucie.h"
 #include "../inireader.h"
 #include "../btree.h"
+#include "../output.h"
 
 extern int urldecode( char* data ); 
 
@@ -16,6 +17,8 @@ void print_padded_line( int padding, const char* fmt, ... )
 {
     const char* spacer = "  ";
     va_list args;
+
+    header_output();
     
     va_start( args, fmt );
 
