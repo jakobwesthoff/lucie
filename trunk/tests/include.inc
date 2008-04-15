@@ -1,0 +1,1 @@
+<?lucie print("Hello World!"); ?>

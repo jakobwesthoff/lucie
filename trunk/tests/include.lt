@@ -1,0 +1,12 @@
+<?lucie
+	include("tests/include.inc");
+	dofile("tests/include.inc");
+?>
+---lucietest-output---
+Content-Type: text/html
+
+Hello World!
+
+Hello World!
+
+

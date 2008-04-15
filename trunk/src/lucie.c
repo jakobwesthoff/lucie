@@ -139,6 +139,22 @@ void register_extensions( lua_State* L )
     }
 }
 
+int L_dofile( lua_State *L ) 
+{
+    const char* filename = luaL_checkstring( L, 1 );
+    DEBUGLOG( "Trying to open file: %s", filename );
+    FILE* f = fopen( filename, "r" );
+    if ( f == NULL ) 
+    {
+        luaL_error( L, "Could not open file \"%s\" for inclusion", filename );
+    }
+    DEBUGLOG( "Trying to include file: %s", filename );
+    LUACHECK( lua_load( L, lucie_reader, f, filename ) );
+    fclose( f );
+    LUACHECK( lua_pcall( L, 0, LUA_MULTRET, 0 ) );
+    return 0;
+}
+
 int main( int argc, char** argv )
 {    
     lua_State* L;
@@ -178,17 +194,16 @@ int main( int argc, char** argv )
     DEBUGLOG( "Installing output overrides" );
     init_output_override( L );
 
-    // Load the script for execution
-    {
-        FILE* f = fopen( argv[1], "r" );
-        DEBUGLOG( "Trying to load lua file: %s", argv[1] );
-        LUACHECK( lua_load( L, lucie_reader, f, argv[1] ) );
-        fclose( f );
-    }
+    // Register include and dofile functions
+    lua_pushcfunction( L, L_dofile );
+    lua_setglobal( L, "dofile" );
+    lua_pushcfunction( L, L_dofile );
+    lua_setglobal( L, "include" );
 
-    // Execute script
-    DEBUGLOG( "Executing loaded script" );
-    LUACHECK( lua_pcall( L, 0, LUA_MULTRET, 0 ) );
+    // Execute the main script
+    lua_getfield( L, LUA_GLOBALSINDEX, "dofile" );
+    lua_pushstring( L, argv[1] );
+    lua_call( L, 1, 0 );
 
     // At least output the default header
     header_output();
