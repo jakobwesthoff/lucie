@@ -145,6 +145,7 @@ int L_dofile( lua_State *L )
     const char* filename = luaL_checkstring( L, 1 );
     FILE* f;
     char* oldFILE;
+    char*  oldDIR;
     const char* tmp;
     
     // Save old file dependend variables
@@ -158,6 +159,16 @@ int L_dofile( lua_State *L )
     {
         oldFILE = strdup( tmp );
     }
+    lua_getglobal( L, "__DIR__" );
+    tmp = lua_tostring( L, -1 );
+    if ( tmp == NULL ) 
+    {
+        oldDIR = NULL;
+    }
+    else 
+    {
+        oldDIR = strdup( tmp );
+    }
 
     // Call out realpath function on the given filename
     lua_getfield( L, LUA_GLOBALSINDEX, "file" );
@@ -166,6 +177,14 @@ int L_dofile( lua_State *L )
     lua_call( L, 1, 1 );
     // Set the __FILE__ variable to the function return value
     lua_setglobal( L, "__FILE__" );
+
+    // Call the dirname function on the __FILE__ var
+    lua_getfield( L, LUA_GLOBALSINDEX, "file" );
+    lua_getfield( L, -1, "dirname" );
+    lua_getglobal( L, "__FILE__" );
+    lua_call( L, 1, 1 );
+    // Set the __DIR__ variable to the function return value
+    lua_setglobal( L, "__DIR__" );
 
     DEBUGLOG( "Trying to open file: %s", filename );
     if ( ( f = fopen( filename, "r" ) ) == NULL )
@@ -182,6 +201,10 @@ int L_dofile( lua_State *L )
     lua_pushstring( L, oldFILE );
     lua_setglobal( L, "__FILE__" );
     free( oldFILE );
+
+    lua_pushstring( L, oldDIR );
+    lua_setglobal( L, "__DIR__" );
+    free( oldDIR );
 
     return 0;
 }
