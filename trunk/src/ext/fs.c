@@ -11,22 +11,7 @@
 #include <lualib.h>
 
 #include "../lucie.h"
-
-enum statquestion { 
-    QUESTION_EXISTS = 1,
-    QUESTION_FILE,
-    QUESTION_DIR,
-    QUESTION_LINK,
-    QUESTION_READABLE,
-    QUESTION_WRITABLE,
-    QUESTION_EXECUTABLE,
-    QUESTION_MTIME,
-    QUESTION_ATIME,
-    QUESTION_CTIME,
-    QUESTION_OWNER,
-    QUESTION_GROUP,
-    QUESTION_SIZE
-};
+#include "fs.h"
 
 int stat_file( lua_State *L, enum statquestion question ) 
 {

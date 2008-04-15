@@ -11,6 +11,8 @@
 #include "../btree.h"
 #include "../output.h"
 
+#include "core.h"
+
 extern int urldecode( char* data ); 
 
 void print_padded_line( int padding, const char* fmt, ... ) 
