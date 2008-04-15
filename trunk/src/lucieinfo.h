@@ -1,4 +1,4 @@
-#ifdef LUCIEINFO_H
+#ifndef LUCIEINFO_H
 #define LUCIEINFO_H
 
 int L_lucieinfo( lua_State* L );

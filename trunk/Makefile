@@ -33,6 +33,6 @@ $(LUCIE): $(LUCIE_C) $(LUCIE_H) $(LUA_A) $(EXTENSIONS)
 	$(CC) -Wall -Wl,-E -I"$(LUA_INCLUDE)" -L"$(LUA_LIB)" -o $(LUCIE) $(LUCIE_C) -lm -ldl -llua $(CFLAGS)
 	$(STRIP) $(LUCIE)
 
-$(EXTENSIONS): $(EXTENSIONS:.so=.c) $(LUCIE_H) 
+$(EXTENSIONS): $(EXTENSIONS:.so=.c) $(EXTENSIONS:.so=.h) $(LUCIE_H) 
 	$(CC) -Wall -shared -Wl,-soname,$(@).1 -fPIC -I"$(LUA_INCLUDE)" -L"$(LUA_LIB)" -o $(@) $(@:.so=.c) $(CFLAGS)
 	$(STRIP) $(@)

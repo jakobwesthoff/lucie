@@ -1,4 +1,4 @@
-#ifdef FS_H
+#ifndef FS_H
 #define FS_H
 
 enum statquestion { 

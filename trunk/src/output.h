@@ -1,4 +1,4 @@
-#ifdef OUTPUT_H
+#ifndef OUTPUT_H
 #define OUTPUT_H
 
 void init_output_override( lua_State *L );
