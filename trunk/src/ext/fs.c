@@ -1,3 +1,4 @@
+#include <limits.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -201,6 +202,18 @@ int L_file_size( lua_State *L )
     return stat_file( L, QUESTION_SIZE );
 }
 
+int L_realpath( lua_State *L ) 
+{
+    char rpath[PATH_MAX];
+    const char* pathname = luaL_checkstring( L, 1 );
+    if ( realpath( pathname, rpath ) == NULL ) 
+    {
+        luaL_error( L, "Could not retrieve realpath: %s", strerror( errno ) );
+    }
+    lua_pushstring( L, rpath );
+    return 1;
+}
+
 void register_extension( lua_State *L ) 
 {
     REGISTER_EXTENSION( "fs", "Jakob Westhoff", "jakob@westhoffswelt.de" );
@@ -220,6 +233,7 @@ void register_extension( lua_State *L )
         REGISTER_NAMESPACE_FUNCTION( L_file_size, size );
         REGISTER_NAMESPACE_FUNCTION( L_basename, basename );
         REGISTER_NAMESPACE_FUNCTION( L_dirname, dirname );
+        REGISTER_NAMESPACE_FUNCTION( L_realpath, realpath );
     NAMESPACE_END( "file" );
 }
 
