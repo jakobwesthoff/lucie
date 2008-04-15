@@ -1,6 +1,4 @@
 #!/home/jakob/dev/c/lucie/trunk/src/lucie
-Content-type: text/html
-
 <html>
 	<head><title>Environment test</title></head>
 	<body>
