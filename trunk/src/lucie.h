@@ -98,13 +98,21 @@ extern int file_exists( const char* filename );
         extensions[extension_count++]->email = emailVal;                                                                \
     }
 
-#define NAMESPACE_BEGIN(namespaceVal) \
-    {                                 \
-        char* namespace=namespaceVal; \
-        lua_newtable( L ); 
+#define NAMESPACE_BEGIN(namespaceVal)  \
+    {                                  \
+        char* namespace=namespaceVal;  \
+        int new_namespace;        \
+        lua_getglobal( L, namespace ); \
+        if ( ( new_namespace = lua_isnil( L, -1 ) ) == 1 )      \
+        {                              \
+            lua_newtable( L );         \
+        }
 
 #define NAMESPACE_END(...) \
-        lua_setglobal( L, namespace );  \
+        if ( new_namespace ) \
+        { \
+            lua_setglobal( L, namespace );  \
+        } \
     }
 
 

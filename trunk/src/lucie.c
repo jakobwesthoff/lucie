@@ -10,6 +10,7 @@
 #include "lucieinfo.h"
 #include "util.h"
 #include "output.h"
+#include "fs.h"
 
 
 const char* config_file = NULL;
@@ -142,9 +143,32 @@ void register_extensions( lua_State* L )
 int L_dofile( lua_State *L ) 
 {
     const char* filename = luaL_checkstring( L, 1 );
+    FILE* f;
+    char* oldFILE;
+    const char* tmp;
+    
+    // Save old file dependend variables
+    lua_getglobal( L, "__FILE__" );
+    tmp = lua_tostring( L, -1 );
+    if ( tmp == NULL ) 
+    {
+        oldFILE = NULL;
+    }
+    else 
+    {
+        oldFILE = strdup( tmp );
+    }
+
+    // Call out realpath function on the given filename
+    lua_getfield( L, LUA_GLOBALSINDEX, "file" );
+    lua_getfield( L, -1, "realpath" );
+    lua_pushstring( L, filename );
+    lua_call( L, 1, 1 );
+    // Set the __FILE__ variable to the function return value
+    lua_setglobal( L, "__FILE__" );
+
     DEBUGLOG( "Trying to open file: %s", filename );
-    FILE* f = fopen( filename, "r" );
-    if ( f == NULL ) 
+    if ( ( f = fopen( filename, "r" ) ) == NULL )
     {
         luaL_error( L, "Could not open file \"%s\" for inclusion", filename );
     }
@@ -152,6 +176,13 @@ int L_dofile( lua_State *L )
     LUACHECK( lua_load( L, lucie_reader, f, filename ) );
     fclose( f );
     LUACHECK( lua_pcall( L, 0, LUA_MULTRET, 0 ) );
+
+    // Restore env
+    DEBUGLOG( "Restoring env" );
+    lua_pushstring( L, oldFILE );
+    lua_setglobal( L, "__FILE__" );
+    free( oldFILE );
+
     return 0;
 }
 
@@ -180,10 +211,6 @@ int main( int argc, char** argv )
     luaL_openlibs( L ); 
     DEBUGLOG( "Lua lib opened" );
 
-    DEBUGLOG( "Registering extensions" );
-    register_extensions( L );
-    DEBUGLOG( "All extensions registered" );
-
     DEBUGLOG( "Converting cgi environment to superglobals" );
     init_superglobals( L );
 
@@ -199,6 +226,22 @@ int main( int argc, char** argv )
     lua_setglobal( L, "dofile" );
     lua_pushcfunction( L, L_dofile );
     lua_setglobal( L, "include" );
+
+    // Register dirname, realpath functions
+    lua_newtable( L );
+    lua_pushstring( L, "dirname" );
+    lua_pushcfunction( L, L_dirname );
+    lua_settable( L, -3 );
+    lua_pushstring( L, "realpath" );
+    lua_pushcfunction( L, L_realpath );
+    lua_settable( L, -3 );
+    lua_setglobal( L, "file" );
+
+    // Register all needed extensions
+    DEBUGLOG( "Registering extensions" );
+    register_extensions( L );
+    DEBUGLOG( "All extensions registered" );
+
 
     // Execute the main script
     lua_getfield( L, LUA_GLOBALSINDEX, "dofile" );
