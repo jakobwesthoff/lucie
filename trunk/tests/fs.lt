@@ -8,9 +8,6 @@
 		file.is_readable( filename ),
 		file.is_writable( filename ),
 		file.is_executable( filename ),
-		file.mtime( filename ),
-		file.atime( filename ),
-		file.ctime( filename ),
 		file.owner( filename ),
 		file.group( filename ),
 		file.size( filename ),
@@ -29,9 +26,6 @@ boolean(false)
 boolean(true)
 boolean(true)
 boolean(false)
-integer(1207948216)
-integer(1207948216)
-integer(1207948216)
 integer(1000)
 integer(100)
 integer(7)
