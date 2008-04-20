@@ -100,15 +100,37 @@ int L_compile( lua_State *L )
 int regexp_exec( lua_State *L ) 
 {
     regex_t* regexp = *( regex_t** )luaL_checkudata( L, 1, REGEXP_REGEX_T );
-    const char* data = luaL_checkstring( L, 2 );
+    const char* data = luaL_checkstring( L, 2 );    
+    // Data for subexpression strings
+    int subexpressionN = 99;
+    regmatch_t* subexpressions = ( regmatch_t* )smalloc( sizeof( regmatch_t ) * subexpressionN + 1 );
+    memset( subexpressions, 0, sizeof( regmatch_t ) * subexpressionN + 1 );
 
-    if ( regexec( regexp, data, 0, NULL, 0 ) == 0 ) 
-    {
-        lua_pushboolean( L, true );
-    }
-    else 
+    // Execute the compiled regex and check for errors
+    if ( regexec( regexp, data, subexpressionN, subexpressions, 0 ) != 0 ) 
     {
         lua_pushboolean( L, false );
+        return 1;
+    }
+    
+    // We need a new table for our matches
+    lua_newtable( L );
+    // Loop through all matches
+    
+    {
+        int i;
+        regmatch_t* cur;
+        for( i=1, cur = subexpressions; cur->rm_so != -1; i++, cur++ ) 
+        {
+            DEBUGLOG( "subexpression: %i, %p", i, cur );
+            // Push the index onto the stack ( Lua indexes start with 1 )
+            lua_pushinteger( L, i );
+            // Push the substring onto the stack
+            lua_pushlstring( L, data + cur->rm_so,  cur->rm_eo - cur->rm_so );
+            // Add key and value to the table
+            lua_settable( L, -3 );
+            DEBUGLOG( "table set" );
+        }
     }
     return 1;
 }
