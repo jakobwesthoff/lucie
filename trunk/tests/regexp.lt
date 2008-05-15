@@ -1,0 +1,27 @@
+<?lucie
+	
+r = re.compile('@^(([A-Z][a-z]+)*)(Bar.*)$@x');
+
+var_dump(
+	r:exec("TestFoobarBarbaz"),
+	r:exec("test"),
+	r:exec("T")
+);
+
+?>
+---lucietest-output---
+Content-Type: text/html
+
+table(4) {
+  [1] =>
+  string(16) "TestFoobarBarbaz"
+  [2] =>
+  string(10) "TestFoobar"
+  [3] =>
+  string(6) "Foobar"
+  [4] =>
+  string(6) "Barbaz"
+}
+boolean(false)
+boolean(false)
+
