@@ -115,8 +115,8 @@ int regexp_exec( lua_State *L )
     
     // We need a new table for our matches
     lua_newtable( L );
+
     // Loop through all matches
-    
     {
         int i;
         regmatch_t* cur;
