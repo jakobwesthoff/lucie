@@ -1,0 +1,61 @@
+<?lucie
+	var_dump( string.split( "/", "/foo/bar/baz/" ) );
+	var_dump( string.split( "/", "foo/bar/baz/" ) );
+	var_dump( string.split( "/", "/foo/bar/baz" ) );
+	var_dump( string.split( "/", "foo/bar/baz" ) );
+	var_dump( string.split( "/", "" ) );
+	var_dump( string.split( "", "foobar" ) );
+	var_dump( string.split( "//", "foobar" ) );
+?>
+---lucietest-output---
+Content-Type: text/html
+
+table(5) {
+  [1] =>
+  string(0) ""
+  [2] =>
+  string(3) "foo"
+  [3] =>
+  string(3) "bar"
+  [4] =>
+  string(3) "baz"
+  [5] =>
+  string(0) ""
+}
+table(4) {
+  [1] =>
+  string(3) "foo"
+  [2] =>
+  string(3) "bar"
+  [3] =>
+  string(3) "baz"
+  [4] =>
+  string(0) ""
+}
+table(4) {
+  [1] =>
+  string(0) ""
+  [2] =>
+  string(3) "foo"
+  [3] =>
+  string(3) "bar"
+  [4] =>
+  string(3) "baz"
+}
+table(3) {
+  [1] =>
+  string(3) "foo"
+  [2] =>
+  string(3) "bar"
+  [3] =>
+  string(3) "baz"
+}
+table(1) {
+  [1] =>
+  string(0) ""
+}
+NIL
+string(66) "The split delimiter must not be empty or bigger then one character"
+NIL
+string(66) "The split delimiter must not be empty or bigger then one character"
+
