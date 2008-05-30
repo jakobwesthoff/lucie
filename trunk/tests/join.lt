@@ -3,6 +3,7 @@
 	var_dump( string.join( "/", { "foo", "bar", "baz", "" } ) )
 	var_dump( string.join( "/", { "", "foo", "bar", "baz" } ) )
 	var_dump( string.join( "/", { "foo", "bar", "baz" } ) )
+	var_dump( string.join( "", { "foo", "bar", "baz" } ) )
 ?>
 ---lucietest-output---
 Content-Type: text/html
@@ -11,4 +12,5 @@ string(13) "/foo/bar/baz/"
 string(12) "foo/bar/baz/"
 string(12) "/foo/bar/baz"
 string(11) "foo/bar/baz"
+string(9) "foobarbaz"
 
