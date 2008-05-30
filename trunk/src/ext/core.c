@@ -289,10 +289,22 @@ int L_readini( lua_State* L )
     return 1;
 }
 
+int L_eval( lua_State *L ) 
+{
+    const char* command = luaL_checkstring( L, 1 );
+    int stackTop = lua_gettop( L );
+    int nresult  = 0;
+    luaL_loadstring( L, command );
+    lua_call( L, 0, LUA_MULTRET );
+    nresult = lua_gettop( L ) - stackTop;
+    return nresult;
+}
+
 void register_extension( lua_State *L ) 
 {
     REGISTER_EXTENSION( "core", "Jakob Westhoff", "jakob@westhoffswelt.de" );
     REGISTER_GLOBAL_FUNCTION( L_var_dump, var_dump );
     REGISTER_GLOBAL_FUNCTION( L_urldecode, urldecode );
     REGISTER_GLOBAL_FUNCTION( L_readini, readini );
+    REGISTER_GLOBAL_FUNCTION( L_eval, eval );
 }

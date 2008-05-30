@@ -1,0 +1,10 @@
+<?lucie
+	eval("print(\"blub\");");
+ 	var_dump( eval("return 42;") );
+?>
+---lucietest-output---
+Content-Type: text/html
+
+blub
+integer(42)
+

@@ -10,6 +10,7 @@ void readini_group_tree_traverse( lua_State* L, btree_element_t* root );
 void readini_tree_traverse( lua_State* L, btree_element_t* root );
 void readini_tree_free( btree_element_t* root );
 int L_readini( lua_State* L );
+int L_eval( lua_State* L );
 void register_extension( lua_State *L );
 
 #endif
