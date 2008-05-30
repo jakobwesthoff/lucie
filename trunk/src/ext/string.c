@@ -37,10 +37,10 @@ int L_split( lua_State *L )
     }
 
     // Scan the string and split at every delimiter
-    // @todo: Add support for multichar delimiter
+    // @todo: Maybe add multichar delimiter support in the future
     {        
-        char* start;
-        char* cur = input_string;
+        const char* start;
+        const char* cur = input_string;
 
         // Split the string starting at the end
         for( start = cur; *cur != 0; cur++ ) 
@@ -62,11 +62,65 @@ int L_split( lua_State *L )
     return 1;
 }
 
+int L_join( lua_State *L ) 
+{
+    char* joinedString  = NULL;
+    int joinedStringLen = 0;
+    unsigned int delimiterLen = 0;
+
+    const char* delimiter = luaL_checklstring( L, 1, &delimiterLen );
+    luaL_checktype( L, 2, LUA_TTABLE );
+
+    // Init the output string. It needs to be at least the \0 terminating character.
+    joinedString = (char*)smalloc( sizeof(char) );
+    *joinedString = 0;
+    joinedStringLen++;
+
+    // Get the table to the top
+    lua_pushvalue( L, 2 );
+    // First key
+    lua_pushnil( L );
+    while( lua_next( L, -2 ) != 0 ) 
+    {
+        unsigned int len = 0;
+        const char* str = NULL;
+        if( ( str = lua_tolstring( L, -1, &len ) ) == NULL ) 
+        {            
+            return luaL_error( L, "Found table entry which could not be casted to type string." );
+        }
+        DEBUGLOG( "New string found in table: string(%i) \"%s\"", len, str );
+        // Allocate needed memory
+        joinedString = (char*)srealloc( joinedString, ( joinedStringLen + len + delimiterLen ) * sizeof( char ) );
+        // Initialize needed memory
+        memset( joinedString + joinedStringLen, 0, len + delimiterLen );
+        // Remember our new string length
+        joinedStringLen += len + delimiterLen;
+        // Concat the new string and delimiter
+        strcat( joinedString, str );
+        strcat( joinedString, delimiter );
+        // Remove the retrieved value from the lua stack for the next call to lua_next
+        lua_pop( L, 1 );
+    }
+
+    // Remove the table from the stack
+    lua_pop( L, 1 );
+
+    // Push the generated string to the stack cutting off the last delimiter
+    lua_pushlstring( L, joinedString, joinedStringLen - delimiterLen - 1 );
+
+    // Free the occupied memory
+    free( joinedString );
+
+    return 1;
+}
+
 void register_extension( lua_State *L ) 
 {
     REGISTER_EXTENSION( "string", "Jakob Westhoff", "jakob@westhoffswelt.de" );
     NAMESPACE_BEGIN( "string" );
         REGISTER_NAMESPACE_FUNCTION( L_split, split );
         REGISTER_NAMESPACE_FUNCTION( L_split, explode );
+        REGISTER_NAMESPACE_FUNCTION( L_join, join );
+        REGISTER_NAMESPACE_FUNCTION( L_join, implode );
     NAMESPACE_END( "string" );
 }
