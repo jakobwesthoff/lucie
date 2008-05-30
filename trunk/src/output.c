@@ -119,7 +119,7 @@ static int luaB_print (lua_State *L) {
 // These are the needed overrides using the lua functions
 //
 
-void init_output_override( lua_State *L ) 
+void init_output_functionality( lua_State *L ) 
 {    
     DEBUGLOG( "Installing file:write override" );    
     luaL_getmetatable( L, LUA_FILEHANDLE );
@@ -163,6 +163,10 @@ void init_output_override( lua_State *L )
     lua_setglobal( L, "ob_start" );
     lua_pushcfunction( L, L_ob_end );
     lua_setglobal( L, "ob_end" );
+
+    // Register simple echo function
+    lua_pushcfunction( L, L_echo );
+    lua_setglobal( L, "echo" );
 }
 
 int L_f_write( lua_State *L ) 
@@ -305,4 +309,34 @@ void appendToOutputBuffer( const char* data, int len )
     outputbufferLen += len;
     memset( outputbuffer + outputbufferLen - 1, 0, 1 );
     return;
+}
+
+//
+// Simple echo function ( without tabs and linebreaks )
+//
+
+int L_echo( lua_State *L ) 
+{
+    int n = lua_gettop( L );  /* number of arguments */
+    int i;
+
+    header_output();   
+    
+    lua_getglobal( L, "tostring" );
+    for ( i=1; i<=n; i++ ) {
+        const char *s;
+        lua_pushvalue( L, -1 );  /* function to be called */
+        lua_pushvalue( L, i );   /* value to print */
+        lua_call( L, 1, 1 );
+        s = lua_tostring( L, -1 );  /* get result */
+        if ( s == NULL ) 
+        {
+            return luaL_error( L, LUA_QL( "tostring" ) " must return a string to " LUA_QL( "echo" ) );
+        }
+
+        // Check for outputbuffering
+        ( outputbuffer != NULL ) ? appendToOutputBuffer( s, strlen( s ) ) : fputs( s, stdout );
+        lua_pop(L, 1);  /* pop result */
+    }
+    return 0;
 }

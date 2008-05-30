@@ -1,0 +1,8 @@
+<?lucie
+	echo("foo", "bar", "\n", "baz");
+?>
+---lucietest-output---
+Content-Type: text/html
+
+foobar
+baz

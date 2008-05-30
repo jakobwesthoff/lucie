@@ -244,7 +244,7 @@ int main( int argc, char** argv )
     lua_setglobal( L, "lucieinfo" );
 
     DEBUGLOG( "Installing output overrides" );
-    init_output_override( L );
+    init_output_functionality( L );
 
     // Register include and dofile functions
     lua_pushcfunction( L, L_dofile );
