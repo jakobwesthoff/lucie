@@ -114,6 +114,65 @@ int L_join( lua_State *L )
     return 1;
 }
 
+int L_tolower( lua_State *L ) 
+{
+    const char* input = luaL_checkstring( L, 1 );
+    char* output = strdup( input );
+    char* cur = output;
+
+    while( *cur != 0 ) 
+    {
+        *cur = ( *cur >= 'A' && *cur <= 'Z' ) ? (*cur) + 32 : *cur;
+        cur++;
+    }
+    lua_pushstring( L, output );
+    free( output );
+    return 1;
+}
+
+int L_toupper( lua_State *L ) 
+{
+    const char* input = luaL_checkstring( L, 1 );
+    char* output = strdup( input );
+    char* cur = output;
+
+    while( *cur != 0 ) 
+    {
+        *cur = ( *cur >= 'a' && *cur <= 'z' ) ? (*cur) - 32 : *cur;
+        cur++;
+    }
+    lua_pushstring( L, output );
+    free( output );
+    return 1;
+}
+
+int L_ucfirst( lua_State *L ) 
+{
+    unsigned int len;
+    const char* input = luaL_checklstring( L, 1, &len );
+    char* output = strdup( input );
+    char* cur = output;
+
+    if ( len == 0 ) 
+    {
+        lua_pushstring( L, cur );
+        free( output );
+        return 1;
+    }
+
+    *cur = ( *cur >= 'a' && *cur <= 'z' ) ? (*cur) - 32 : *cur;
+    cur++;
+
+    while( *cur != 0 ) 
+    {
+        *cur = ( *cur >= 'A' && *cur <= 'Z' ) ? (*cur) + 32 : *cur;
+        cur++;
+    }
+    lua_pushstring( L,  output );
+    free( output );
+    return 1;
+}
+
 void register_extension( lua_State *L ) 
 {
     REGISTER_EXTENSION( "string", "Jakob Westhoff", "jakob@westhoffswelt.de" );
@@ -122,5 +181,8 @@ void register_extension( lua_State *L )
         REGISTER_NAMESPACE_FUNCTION( L_split, explode );
         REGISTER_NAMESPACE_FUNCTION( L_join, join );
         REGISTER_NAMESPACE_FUNCTION( L_join, implode );
+        REGISTER_NAMESPACE_FUNCTION( L_tolower, tolower );
+        REGISTER_NAMESPACE_FUNCTION( L_toupper, toupper );
+        REGISTER_NAMESPACE_FUNCTION( L_ucfirst, ucfirst );
     NAMESPACE_END( "string" );
 }

@@ -1,0 +1,44 @@
+<?lucie
+	var_dump( string.tolower( "/foo42" ) )
+	var_dump( string.tolower( "/Foo42" ) )
+	var_dump( string.tolower( "/FOo42" ) )
+	var_dump( string.tolower( "/FOO42" ) )
+	var_dump( string.tolower( "/fOO42" ) )
+	var_dump( string.tolower( "/foO42" ) )
+
+	var_dump( string.toupper( "/foo42" ) )
+	var_dump( string.toupper( "/Foo42" ) )
+	var_dump( string.toupper( "/FOo42" ) )
+	var_dump( string.toupper( "/FOO42" ) )
+	var_dump( string.toupper( "/fOO42" ) )
+	var_dump( string.toupper( "/foO42" ) )
+
+	var_dump( string.ucfirst( "foo42" ) )
+	var_dump( string.ucfirst( "Foo42" ) )
+	var_dump( string.ucfirst( "FOo42" ) )
+	var_dump( string.ucfirst( "FOO42" ) )
+	var_dump( string.ucfirst( "fOO42" ) )
+	var_dump( string.ucfirst( "foO42" ) )
+?>
+---lucietest-output---
+Content-Type: text/html
+
+string(6) "/foo42"
+string(6) "/foo42"
+string(6) "/foo42"
+string(6) "/foo42"
+string(6) "/foo42"
+string(6) "/foo42"
+string(6) "/FOO42"
+string(6) "/FOO42"
+string(6) "/FOO42"
+string(6) "/FOO42"
+string(6) "/FOO42"
+string(6) "/FOO42"
+string(5) "Foo42"
+string(5) "Foo42"
+string(5) "Foo42"
+string(5) "Foo42"
+string(5) "Foo42"
+string(5) "Foo42"
+
