@@ -40,8 +40,7 @@ int L_split( lua_State *L )
     // @todo: Add support for multichar delimiter
     {        
         char* start;
-        char* string_to_free = strdup( input_string );
-        char* cur = string_to_free;
+        char* cur = input_string;
 
         // Split the string starting at the end
         for( start = cur; *cur != 0; cur++ ) 
@@ -59,9 +58,6 @@ int L_split( lua_State *L )
         lua_pushinteger( L, tableIndex++ );
         lua_pushlstring( L, start, cur - start );
         lua_settable( L, -3 );
-
-        // Free the copied string
-        free( string_to_free );
     }
     return 1;
 }
