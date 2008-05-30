@@ -20,6 +20,8 @@ extension_t **extensions;
 
 char errorstring[4096];
 
+extern char* outputbuffer;
+
 void cleanup_registered_extensions()
 {
     int i,j;
@@ -276,6 +278,13 @@ int main( int argc, char** argv )
 
     // Cleanup header data
     cleanup_headerdata();
+
+    // If the output buffer has not been terminated do it now and output its contents
+    if ( outputbuffer != NULL ) 
+    {
+        printf( outputbuffer );
+        free( outputbuffer );
+    }
 
     // Cleanup memory from registered extensions
     cleanup_registered_extensions();

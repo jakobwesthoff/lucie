@@ -1,0 +1,14 @@
+<?lucie
+	ob_start();
+	print("foobar");
+	print("baz");
+	output = ob_end();
+	var_dump(output);
+?>
+---lucietest-output---
+Content-Type: text/html
+
+string(11) "foobar
+baz
+"
+

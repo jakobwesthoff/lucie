@@ -14,6 +14,8 @@ struct httpheader
 
 struct httpheader* httpheader;
 int headersent;
+char* outputbuffer;
+int outputbufferLen;
 
 int L_f_write( lua_State *L );
 int L_io_write( lua_State *L );
@@ -21,7 +23,7 @@ int L_print( lua_State *L );
 int L_header( lua_State *L );
 
 //
-// This part has been copied from the lua 5.1.3 source code
+// This part has mostly been copied from the lua 5.1.3 source code
 //
 
 #define IO_INPUT    1
@@ -72,15 +74,17 @@ static int g_write (lua_State *L, FILE *f, int arg) {
   int nargs = lua_gettop(L) - 1;
   int status = 1;
   for (; nargs--; arg++) {
-    if (lua_type(L, arg) == LUA_TNUMBER) {
-      /* optimization: could be done exactly as for strings */
-      status = status &&
-          fprintf(f, LUA_NUMBER_FMT, lua_tonumber(L, arg)) > 0;
+    size_t l;
+    const char *s = luaL_checklstring(L, arg, &l);
+    // Check for outputbuffering
+    if ( f == stdout && outputbuffer != NULL ) 
+    {
+        appendToOutputBuffer( s, l );
     }
-    else {
-      size_t l;
-      const char *s = luaL_checklstring(L, arg, &l);
-      status = status && (fwrite(s, sizeof(char), l, f) == l);
+    else 
+    {
+        // original lua output
+        status = status && (fwrite(s, sizeof(char), l, f) == l);
     }
   }
   return pushresult(L, status, NULL);
@@ -99,11 +103,13 @@ static int luaB_print (lua_State *L) {
     if (s == NULL)
       return luaL_error(L, LUA_QL("tostring") " must return a string to "
                            LUA_QL("print"));
-    if (i>1) fputs("\t", stdout);
-    fputs(s, stdout);
+
+    // Check for outputbuffering
+    if (i>1) ( outputbuffer != NULL ) ? appendToOutputBuffer( "\t", 1 ) : fputs("\t", stdout);
+    ( outputbuffer != NULL ) ? appendToOutputBuffer( s, strlen( s ) ) : fputs(s, stdout);
     lua_pop(L, 1);  /* pop result */
   }
-  fputs("\n", stdout);
+  ( outputbuffer != NULL ) ? appendToOutputBuffer( "\n", 1 ) : fputs("\n", stdout);
   return 0;
 }
 
@@ -144,16 +150,26 @@ void init_output_override( lua_State *L )
     httpheader->value = strdup( "text/html" );
     httpheader->next = NULL;
 
+    // Init the outputbuffer state
+    outputbuffer = NULL;
+    outputbufferLen = 0;
+
     // Register the header function
     lua_pushcfunction( L, L_header );
     lua_setglobal( L, "header" );
+
+    // Register the outputbuffer functions
+    lua_pushcfunction( L, L_ob_start );
+    lua_setglobal( L, "ob_start" );
+    lua_pushcfunction( L, L_ob_end );
+    lua_setglobal( L, "ob_end" );
 }
 
 int L_f_write( lua_State *L ) 
 {
     FILE* f = tofile( L );
     if ( f == stdout ) 
-    {
+    {        
         header_output();   
     }
     // Let lua handle the output procedure
@@ -247,3 +263,46 @@ void header_output()
     headersent = true;    
 }
 
+//
+// Handle the outputbuffer stuff
+//
+
+int L_ob_start( lua_State *L ) 
+{
+    if ( outputbuffer != NULL ) 
+    {
+        return 0;
+    }
+
+    outputbuffer = (char*)smalloc( sizeof( char ) );
+    *outputbuffer = 0;
+    outputbufferLen = 1;
+    return 0;
+}
+
+int L_ob_end( lua_State *L ) 
+{
+    if( outputbuffer == NULL ) 
+    {
+        return luaL_error( L, "ob_end called ob_start." );
+    }
+
+    lua_pushlstring( L, outputbuffer, outputbufferLen - 1 );
+    free( outputbuffer );
+    outputbuffer = NULL;
+    outputbufferLen = 0;
+    return 1;
+}
+
+void appendToOutputBuffer( const char* data, int len ) 
+{
+    if( outputbuffer == NULL ) 
+    {
+        return;
+    }
+    outputbuffer = (char*)srealloc( outputbuffer, (outputbufferLen + len) * sizeof( char ) );
+    memcpy( outputbuffer + outputbufferLen - 1, data, len );
+    outputbufferLen += len;
+    memset( outputbuffer + outputbufferLen - 1, 0, 1 );
+    return;
+}
