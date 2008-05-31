@@ -170,7 +170,11 @@ const char* lucie_reader( lua_State* L, void* data, size_t* size )
                 else if ( state == HTML ) 
                 {
                     // HTML content
-                    dynamic_string_add_char( &html_buffer, reading_buffer[i] );                    
+                    // Maybe we are at the last char and it is a newline. In this case it is ignored
+                    if ( i < filesize - 1 || reading_buffer[i] != '\n' ) 
+                    {
+                        dynamic_string_add_char( &html_buffer, reading_buffer[i] );                    
+                    }
                     i++;
                 }
                 else if ( state == HTML_LONG_BRACKET && reading_buffer[i] == '=' ) 
