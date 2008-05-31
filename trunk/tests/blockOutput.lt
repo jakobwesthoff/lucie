@@ -3,6 +3,7 @@ before block
 	io.write("in block");
 ?>
 after block
+
 ---lucietest-output---
 Content-Type: text/html
 

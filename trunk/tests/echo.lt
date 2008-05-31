@@ -1,5 +1,5 @@
 <?lucie
-	echo("foo", "bar", "\n", "baz");
+	echo("foo", "bar", "\n", "baz", "\n");
 ?>
 ---lucietest-output---
 Content-Type: text/html
