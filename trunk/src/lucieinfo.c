@@ -6,7 +6,7 @@
 #include "output.h"
 #include "lucieinfo.h"
 
-void lucieinfo_header() 
+static void lucieinfo_header() 
 {
     //
     // Html header and stylesheet
@@ -98,7 +98,7 @@ void lucieinfo_header()
    " );
 }
 
-void lucieinfo_footer() 
+static void lucieinfo_footer() 
 {
     printf( " \
 </body> \n \
@@ -106,17 +106,17 @@ void lucieinfo_footer()
     " );
 }
 
-void lucieinfo_table_begin( char* class ) 
+static void lucieinfo_table_begin( char* class ) 
 {
     printf( "<table class=\"%s\">\n", class );
 }
 
-void lucieinfo_table_end() 
+static void lucieinfo_table_end() 
 {
     printf( "</table>\n" );
 }
 
-void lucieinfo_table_header( int cols, ... ) 
+static void lucieinfo_table_header( int cols, ... ) 
 {
     va_list va;
     int i; 
@@ -133,7 +133,7 @@ void lucieinfo_table_header( int cols, ... )
     printf( "</tr></thead>\n" );
 }
 
-void lucieinfo_table_row( int cols, ... ) 
+static void lucieinfo_table_row( int cols, ... ) 
 {
     va_list va;
     int i; 
@@ -149,7 +149,7 @@ void lucieinfo_table_row( int cols, ... )
     printf( "</tr>\n" );
 }
 
-void lucieinfo_headline( int type, char* headline ) 
+static void lucieinfo_headline( int type, char* headline ) 
 {
     printf( "<h%i>%s</h%i>\n", type, headline, type );
 }
@@ -305,6 +305,7 @@ int L_lucieinfo( lua_State* L )
     }
     lucieinfo_table_end();
 
-    return 0;
+    lucieinfo_footer();
 
+    return 0;
 }

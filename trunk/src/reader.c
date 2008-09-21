@@ -3,7 +3,7 @@
 
 #include "lucie.h"
 
-void dynamic_string_init( char** buffer ) 
+static void dynamic_string_init( char** buffer ) 
 {
     if ( *buffer != NULL ) 
     { 
@@ -13,7 +13,7 @@ void dynamic_string_init( char** buffer )
     *buffer = NULL;
 }
 
-void dynamic_string_add( char** buffer, char* data ) 
+static void dynamic_string_add( char** buffer, char* data ) 
 {
     DEBUGLOG( "STRING_ADD( \"%s\" )", data ); 
     int datalen = strlen( data ); 
@@ -32,7 +32,7 @@ void dynamic_string_add( char** buffer, char* data )
     } 
 }
 
-void dynamic_string_add_char( char** buffer, char data ) 
+static void dynamic_string_add_char( char** buffer, char data ) 
 {
     DEBUGLOG( "STRING_ADD_CHAR( \"%c\" )", data ); 
     int datalen = 1; 

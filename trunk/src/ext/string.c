@@ -9,7 +9,7 @@
 #include "../lucie.h"
 #include "string.h"
 
-int L_split( lua_State *L ) 
+static int L_split( lua_State *L ) 
 {
     const char* delimiter    = luaL_checkstring( L, 1 );
     const char* input_string = luaL_checkstring( L, 2 );
@@ -62,7 +62,7 @@ int L_split( lua_State *L )
     return 1;
 }
 
-int L_join( lua_State *L ) 
+static int L_join( lua_State *L ) 
 {
     char* joinedString  = NULL;
     int joinedStringLen = 0;
@@ -114,7 +114,7 @@ int L_join( lua_State *L )
     return 1;
 }
 
-int L_tolower( lua_State *L ) 
+static int L_tolower( lua_State *L ) 
 {
     const char* input = luaL_checkstring( L, 1 );
     char* output = strdup( input );
@@ -130,7 +130,7 @@ int L_tolower( lua_State *L )
     return 1;
 }
 
-int L_toupper( lua_State *L ) 
+static int L_toupper( lua_State *L ) 
 {
     const char* input = luaL_checkstring( L, 1 );
     char* output = strdup( input );
@@ -146,7 +146,7 @@ int L_toupper( lua_State *L )
     return 1;
 }
 
-int L_ucfirst( lua_State *L ) 
+static int L_ucfirst( lua_State *L ) 
 {
     unsigned int len;
     const char* input = luaL_checklstring( L, 1, &len );

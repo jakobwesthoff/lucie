@@ -6,7 +6,7 @@
 
 extern char **environ;
 
-int urldecode( char* data ) 
+static int urldecode( char* data ) 
 {
     int i = 0;
     int j = 0;
@@ -55,7 +55,7 @@ int urldecode( char* data )
     return true;
 }
 
-void add_env_variable( lua_State* L,  const char* key, const char* env ) 
+static void add_env_variable( lua_State* L,  const char* key, const char* env ) 
 {
     char* envdata;
     
@@ -78,7 +78,7 @@ void add_env_variable( lua_State* L,  const char* key, const char* env )
     lua_settable( L, -3 );
 }
 
-void decode_url_parameter_string( lua_State* L, const char* data )
+static void decode_url_parameter_string( lua_State* L, const char* data )
 {
     int entries = 1;
     int len     = 0;

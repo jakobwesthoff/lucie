@@ -17,10 +17,10 @@ int headersent;
 char* outputbuffer;
 int outputbufferLen;
 
-int L_f_write( lua_State *L );
-int L_io_write( lua_State *L );
-int L_print( lua_State *L );
-int L_header( lua_State *L );
+static int L_f_write( lua_State *L );
+static int L_io_write( lua_State *L );
+static int L_print( lua_State *L );
+static int L_header( lua_State *L );
 
 //
 // This part has mostly been copied from the lua 5.1.3 source code
@@ -36,6 +36,11 @@ static FILE *tofile (lua_State *L);
 static FILE *getiofile (lua_State *L, int findex);
 static int g_write (lua_State *L, FILE *f, int arg);
 static int luaB_print (lua_State *L);
+
+static void appendToOutputBuffer( const char* data, int len );
+static int L_ob_start( lua_State *L );
+static int L_ob_end( lua_State *L );
+static int L_echo( lua_State *L );
 
 static int pushresult (lua_State *L, int i, const char *filename) {
   int en = errno;  /* calls to Lua API may change this value */
@@ -169,7 +174,7 @@ void init_output_functionality( lua_State *L )
     lua_setglobal( L, "echo" );
 }
 
-int L_f_write( lua_State *L ) 
+static int L_f_write( lua_State *L ) 
 {
     FILE* f = tofile( L );
     if ( f == stdout ) 
@@ -180,7 +185,7 @@ int L_f_write( lua_State *L )
     return g_write( L, f, 2 ); 
 }
 
-int L_io_write( lua_State *L )
+static int L_io_write( lua_State *L )
 {
     FILE* f = getiofile( L, IO_OUTPUT );
     if ( f == stdout ) 
@@ -190,7 +195,7 @@ int L_io_write( lua_State *L )
     return g_write( L, f, 1 );
 }
 
-int L_print( lua_State *L ) 
+static int L_print( lua_State *L ) 
 {
     header_output();   
     return luaB_print( L );
@@ -200,7 +205,7 @@ int L_print( lua_State *L )
 // Handle the header output and cleanup
 //
 
-int L_header( lua_State *L ) 
+static int L_header( lua_State *L ) 
 {
     struct httpheader* cur;
     struct httpheader* before = NULL;
@@ -271,7 +276,7 @@ void header_output()
 // Handle the outputbuffer stuff
 //
 
-int L_ob_start( lua_State *L ) 
+static int L_ob_start( lua_State *L ) 
 {
     if ( outputbuffer != NULL ) 
     {
@@ -284,7 +289,7 @@ int L_ob_start( lua_State *L )
     return 0;
 }
 
-int L_ob_end( lua_State *L ) 
+static int L_ob_end( lua_State *L ) 
 {
     if( outputbuffer == NULL ) 
     {
@@ -298,7 +303,7 @@ int L_ob_end( lua_State *L )
     return 1;
 }
 
-void appendToOutputBuffer( const char* data, int len ) 
+static void appendToOutputBuffer( const char* data, int len ) 
 {
     if( outputbuffer == NULL ) 
     {
@@ -315,7 +320,7 @@ void appendToOutputBuffer( const char* data, int len )
 // Simple echo function ( without tabs and linebreaks )
 //
 
-int L_echo( lua_State *L ) 
+static int L_echo( lua_State *L ) 
 {
     int n = lua_gettop( L );  /* number of arguments */
     int i;

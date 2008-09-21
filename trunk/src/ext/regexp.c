@@ -10,31 +10,18 @@
 
 #include "regexp.h"
 
+#define REGEXP_REGEX_T "regex_t*"
+
+static int regexp_exec( lua_State *L );
+static int regexp_gc( lua_State *L );
+
 static const luaL_Reg regexp_metatable[] = {
     { "exec", regexp_exec },
     { "__gc", regexp_gc },
     { NULL, NULL }
 };
 
-void register_extension( lua_State *L ) 
-{
-    REGISTER_EXTENSION( "regexp", "Jakob Westhoff", "jakob@westhoffswelt.de" );
-    NAMESPACE_BEGIN( "re" );
-        REGISTER_NAMESPACE_FUNCTION( L_compile, compile );
-    NAMESPACE_END( "re" );
-
-    // We need to create our needed metatable for the regexp "object"
-    luaL_newmetatable( L, REGEXP_REGEX_T );
-    // Copy the metatable
-    lua_pushvalue( L, -1 );
-    // Set the metatable as index table. Using this trick we can define all the
-    // needed functions for our userdata inside the metatable
-    lua_setfield( L, -2, "__index" );
-    // Register the needed functions
-    luaL_register( L, NULL, regexp_metatable );
-}
-
-int L_compile( lua_State *L ) 
+static int L_compile( lua_State *L ) 
 {
     regex_t* regexp = smalloc( sizeof( regex_t ) );
     const char* regexp_string = luaL_checkstring( L, 1 );
@@ -97,7 +84,7 @@ int L_compile( lua_State *L )
     return 1;
 }
 
-int regexp_exec( lua_State *L ) 
+static int regexp_exec( lua_State *L ) 
 {
     regex_t* regexp = *( regex_t** )luaL_checkudata( L, 1, REGEXP_REGEX_T );
     const char* data = luaL_checkstring( L, 2 );    
@@ -135,7 +122,7 @@ int regexp_exec( lua_State *L )
     return 1;
 }
 
-int regexp_gc( lua_State *L ) 
+static int regexp_gc( lua_State *L ) 
 {
     regex_t* regexp = *( regex_t** )luaL_checkudata( L, 1, REGEXP_REGEX_T );
 
@@ -143,4 +130,22 @@ int regexp_gc( lua_State *L )
     free( regexp );
 
     return 0;
+}
+
+void register_extension( lua_State *L ) 
+{
+    REGISTER_EXTENSION( "regexp", "Jakob Westhoff", "jakob@westhoffswelt.de" );
+    NAMESPACE_BEGIN( "re" );
+        REGISTER_NAMESPACE_FUNCTION( L_compile, compile );
+    NAMESPACE_END( "re" );
+
+    // We need to create our needed metatable for the regexp "object"
+    luaL_newmetatable( L, REGEXP_REGEX_T );
+    // Copy the metatable
+    lua_pushvalue( L, -1 );
+    // Set the metatable as index table. Using this trick we can define all the
+    // needed functions for our userdata inside the metatable
+    lua_setfield( L, -2, "__index" );
+    // Register the needed functions
+    luaL_register( L, NULL, regexp_metatable );
 }

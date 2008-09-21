@@ -22,7 +22,7 @@ char errorstring[4096];
 
 extern char* outputbuffer;
 
-void cleanup_registered_extensions()
+static void cleanup_registered_extensions()
 {
     int i,j;
 
@@ -43,7 +43,7 @@ void cleanup_registered_extensions()
     DEBUGLOG( "All extension memory freed." );
 }
 
-void register_extensions( lua_State* L ) 
+static void register_extensions( lua_State* L ) 
 {
     inifile_t* inifile         = NULL;
     inireader_iterator_t* iter = NULL;

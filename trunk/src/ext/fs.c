@@ -14,7 +14,23 @@
 #include "../lucie.h"
 #include "fs.h"
 
-int stat_file( lua_State *L, enum statquestion question ) 
+enum statquestion { 
+    QUESTION_EXISTS = 1,
+    QUESTION_FILE,
+    QUESTION_DIR,
+    QUESTION_LINK,
+    QUESTION_READABLE,
+    QUESTION_WRITABLE,
+    QUESTION_EXECUTABLE,
+    QUESTION_MTIME,
+    QUESTION_ATIME,
+    QUESTION_CTIME,
+    QUESTION_OWNER,
+    QUESTION_GROUP,
+    QUESTION_SIZE
+};
+
+static int stat_file( lua_State *L, enum statquestion question ) 
 {
     const char* filename = luaL_checkstring( L, 1 );
     struct stat buffer;
@@ -101,7 +117,7 @@ int stat_file( lua_State *L, enum statquestion question )
     return 1;
 }
 
-int L_basename( lua_State *L ) 
+static int L_basename( lua_State *L ) 
 {
     const char* filename = luaL_checkstring( L, 1 );
     const char* basename = NULL;
@@ -117,67 +133,67 @@ int L_basename( lua_State *L )
     return 1;
 }
 
-int L_file_exists( lua_State *L ) 
+static int L_file_exists( lua_State *L ) 
 {
     return stat_file( L, QUESTION_EXISTS );
 }
 
-int L_is_file( lua_State *L ) 
+static int L_is_file( lua_State *L ) 
 {
     return stat_file( L, QUESTION_FILE );
 }
 
-int L_is_dir( lua_State *L ) 
+static int L_is_dir( lua_State *L ) 
 {
     return stat_file( L, QUESTION_DIR );
 }
 
-int L_is_readable( lua_State *L ) 
+static int L_is_readable( lua_State *L ) 
 {
     return stat_file( L, QUESTION_READABLE );
 }
 
-int L_is_writable( lua_State *L ) 
+static int L_is_writable( lua_State *L ) 
 {
     return stat_file( L, QUESTION_WRITABLE );
 }
 
-int L_is_executable( lua_State *L ) 
+static int L_is_executable( lua_State *L ) 
 {
     return stat_file( L, QUESTION_EXECUTABLE );
 }
 
-int L_is_link( lua_State *L ) 
+static int L_is_link( lua_State *L ) 
 {
     return stat_file( L, QUESTION_LINK );
 }
 
-int L_file_mtime( lua_State *L ) 
+static int L_file_mtime( lua_State *L ) 
 {
     return stat_file( L, QUESTION_MTIME );
 }
 
-int L_file_atime( lua_State *L ) 
+static int L_file_atime( lua_State *L ) 
 {
     return stat_file( L, QUESTION_ATIME );
 }
 
-int L_file_ctime( lua_State *L ) 
+static int L_file_ctime( lua_State *L ) 
 {
     return stat_file( L, QUESTION_CTIME );
 }
 
-int L_file_owner( lua_State *L ) 
+static int L_file_owner( lua_State *L ) 
 {
     return stat_file( L, QUESTION_OWNER );
 }
 
-int L_file_group( lua_State *L ) 
+static int L_file_group( lua_State *L ) 
 {
     return stat_file( L, QUESTION_GROUP );
 }
 
-int L_file_size( lua_State *L ) 
+static int L_file_size( lua_State *L ) 
 {
     return stat_file( L, QUESTION_SIZE );
 }

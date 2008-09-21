@@ -15,7 +15,7 @@
 
 extern int urldecode( char* data ); 
 
-void print_padded_line( int padding, const char* fmt, ... ) 
+static void print_padded_line( int padding, const char* fmt, ... ) 
 {
     const char* spacer = "  ";
     va_list args;
@@ -34,7 +34,7 @@ void print_padded_line( int padding, const char* fmt, ... )
     va_end( args );
 }
 
-void var_dump( lua_State* L, int depth ) 
+static void var_dump( lua_State* L, int depth ) 
 {
     // All the different datatypes need to be handled differently
     if ( lua_isnil( L, -1 ) ) 
@@ -97,7 +97,7 @@ void var_dump( lua_State* L, int depth )
     lua_pop( L, 1 );
 }
 
-int L_var_dump( lua_State* L ) 
+static int L_var_dump( lua_State* L ) 
 {
     int i;
     int elements = lua_gettop( L );
@@ -111,7 +111,7 @@ int L_var_dump( lua_State* L )
     return 0;
 }
 
-int L_urldecode( lua_State* L ) 
+static int L_urldecode( lua_State* L ) 
 {
     const char* param;
     char* data;
@@ -123,7 +123,7 @@ int L_urldecode( lua_State* L )
     return 1;
 }
 
-void readini_array_traverse( lua_State* L, btree_element_t* root, int arrayindex ) 
+static void readini_array_traverse( lua_State* L, btree_element_t* root, int arrayindex ) 
 {
     if ( root->next != NULL ) 
     {
@@ -148,7 +148,7 @@ void readini_array_traverse( lua_State* L, btree_element_t* root, int arrayindex
     lua_settable( L, -3 );
 }
 
-void readini_group_tree_traverse( lua_State* L, btree_element_t* root ) 
+static void readini_group_tree_traverse( lua_State* L, btree_element_t* root ) 
 {
     if ( root->left != NULL ) 
     {
@@ -185,7 +185,7 @@ void readini_group_tree_traverse( lua_State* L, btree_element_t* root )
     lua_settable( L, -3 );
 }
 
-void readini_tree_traverse( lua_State* L, btree_element_t* root )
+static void readini_tree_traverse( lua_State* L, btree_element_t* root )
 {
     if ( root->left != NULL ) 
     {
@@ -213,7 +213,7 @@ void readini_tree_traverse( lua_State* L, btree_element_t* root )
 }
 
 
-void readini_tree_free( btree_element_t* root ) 
+static void readini_tree_free( btree_element_t* root ) 
 {
     // Traverse every node and free the subtree
     if ( root->left != NULL ) 
@@ -229,7 +229,7 @@ void readini_tree_free( btree_element_t* root )
     btree_free( ( btree_element_t* )root->data );
 }
 
-int L_readini( lua_State* L ) 
+static int L_readini( lua_State* L ) 
 {
     const char* filename;
     inifile_t* inifile            = NULL;
@@ -289,7 +289,7 @@ int L_readini( lua_State* L )
     return 1;
 }
 
-int L_eval( lua_State *L ) 
+static int L_eval( lua_State *L ) 
 {
     const char* command = luaL_checkstring( L, 1 );
     int stackTop = lua_gettop( L );
